@@ -1,0 +1,25 @@
+vercel supabase
+mobbin
+garphify
+
+1.	Seurattavat terveys arvot
+    a.	Verenpaine
+    b.	Paino
+    c.	Unenmäärä
+    d.	Askeltenmäärä päivässä
+    e. Muu
+
+2.	Tekoälykommentit
+    a.	Mikä LLM?
+    b.	Local vai online?
+    c.	Miten varmistetaan oikea palaute?
+
+3.	Tietokanta
+    a.	Käyttäjät
+    b.	Terveysarvot
+    c.	Tavoitteet
+    d.	Saavutukset
+    e. AI-viestit
+
+
+Muista ettei tietokantaan saa laittaa tyhjää tavoitetta
