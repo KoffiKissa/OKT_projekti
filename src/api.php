@@ -101,6 +101,17 @@ try {
             respond(200, ['goals' => $goals]);
         }
 
+        if (($_GET['resource'] ?? '') === 'health_markers') {
+            $statement = $pdo->prepare(
+                'SELECT id, category, measurement, date
+                 FROM health_markers
+                 WHERE user_id = :user_id
+                 ORDER BY date DESC, id DESC'
+            );
+            $statement->execute(['user_id' => (int) $user['user_id']]);
+            respond(200, ['entries' => $statement->fetchAll()]);
+        }
+
         respond(200, ['user' => publicUser($user)]);
     }
 
@@ -123,8 +134,91 @@ try {
     $username = $credentials['username'] ?? null;
     $password = $credentials['password'] ?? null;
 
-    if (!is_string($action) || !in_array($action, ['login', 'register', 'create_goal', 'update_goal', 'delete_goal'], true)) {
+    if (!is_string($action) || !in_array($action, ['login', 'register', 'create_goal', 'update_goal', 'delete_goal', 'create_entry'], true)) {
         respond(400, ['error' => 'Invalid account action.']);
+    }
+
+    if ($action === 'create_entry') {
+        if (!isset($_SESSION['user_id'])) {
+            respond(401, ['error' => 'Please sign in before adding an entry.']);
+        }
+
+        $category = $credentials['category'] ?? null;
+        $date = $credentials['date'] ?? null;
+        $categories = ['weight', 'sleep', 'steps', 'blood_pressure'];
+        if (!is_string($category) || !in_array($category, $categories, true)) {
+            respond(400, ['error' => 'Choose a valid health parameter.']);
+        }
+
+        $isBloodPressure = $category === 'blood_pressure';
+        $measurement = $credentials['measurement'] ?? null;
+        $systolic = $credentials['systolic'] ?? null;
+        $diastolic = $credentials['diastolic'] ?? null;
+
+        if ($isBloodPressure) {
+            if (
+                !is_int($systolic)
+                || !is_int($diastolic)
+                || $systolic < 50
+                || $systolic > 300
+                || $diastolic < 30
+                || $diastolic > 200
+                || $systolic <= $diastolic
+            ) {
+                respond(400, ['error' => 'Enter valid whole-number blood pressure values (systolic 50–300 and diastolic 30–200 mmHg; systolic must be higher).']);
+            }
+            $measurement = "{$systolic}/{$diastolic}";
+        } elseif (
+            (!is_int($measurement) && !is_float($measurement))
+            || !is_finite((float) $measurement)
+        ) {
+            respond(400, ['error' => 'Enter a numeric measurement.']);
+        } elseif ($category === 'weight' && ($measurement < 0.1 || $measurement > 500)) {
+            respond(400, ['error' => 'Weight must be between 0.1 and 500 kg.']);
+        } elseif ($category === 'sleep' && ($measurement < 0 || $measurement > 24)) {
+            respond(400, ['error' => 'Sleep must be between 0 and 24 hours.']);
+        } elseif ($category === 'steps' && (!is_int($measurement) || $measurement < 0 || $measurement > 200000)) {
+            respond(400, ['error' => 'Daily steps must be a whole number between 0 and 200,000.']);
+        } elseif (in_array($category, ['weight', 'sleep'], true) && abs($measurement - round($measurement, 2)) > 0.00000001) {
+            respond(400, ['error' => 'Measurements can have up to 2 decimal places.']);
+        }
+
+        if (!$isBloodPressure) {
+            $measurement = number_format((float) $measurement, 2, '.', '');
+            $measurement = rtrim(rtrim($measurement, '0'), '.');
+        }
+
+        $entryDate = is_string($date) ? DateTimeImmutable::createFromFormat('!Y-m-d', $date) : false;
+        $dateErrors = DateTimeImmutable::getLastErrors();
+        if (
+            $entryDate === false
+            || $entryDate->format('Y-m-d') !== $date
+            || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+            || $entryDate > new DateTimeImmutable('today')
+        ) {
+            respond(400, ['error' => 'Choose a valid measurement date that is not in the future.']);
+        }
+
+        $pdo = connectToDatabase();
+        $statement = $pdo->prepare(
+            'INSERT INTO health_markers (user_id, category, measurement, date)
+             VALUES (:user_id, :category, :measurement, :date)'
+        );
+        $statement->execute([
+            'user_id' => (int) $_SESSION['user_id'],
+            'category' => $category,
+            'measurement' => $measurement,
+            'date' => $entryDate->format('Y-m-d'),
+        ]);
+
+        respond(201, [
+            'entry' => [
+                'id' => (int) $pdo->lastInsertId(),
+                'category' => $category,
+                'measurement' => $measurement,
+                'date' => $entryDate->format('Y-m-d'),
+            ],
+        ]);
     }
 
     $goalActions = ['create_goal', 'update_goal', 'delete_goal'];

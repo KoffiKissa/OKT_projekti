@@ -379,6 +379,26 @@ button:disabled {
     line-height: 1.5;
 }
 
+.entry-number-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.entry-number-row[hidden],
+#single-measurement-field[hidden] {
+    display: none;
+}
+
+.entry-number-row .field {
+    margin-bottom: 8px;
+}
+
+.entry-number-row .field-hint {
+    grid-column: 1 / -1;
+    margin: 0 0 18px;
+}
+
 .account-switch {
     margin: 20px 0 0;
     color: #738077;
@@ -422,5 +442,14 @@ button:disabled {
 
     .goal-form-actions button {
         width: 100%;
+    }
+
+    .entry-number-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .entry-number-row .field-hint {
+        grid-column: auto;
     }
 }

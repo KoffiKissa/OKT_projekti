@@ -18,6 +18,7 @@
             <strong>You're signed in.</strong>
             <p id="user-details"></p>
             <a class="goal-link" href="goals.php">View and add health goals</a>
+            <a class="goal-link" href="entries.php">Add a new health entry</a>
         </div>
 
         <form id="login-form" action="api.php" method="post">
