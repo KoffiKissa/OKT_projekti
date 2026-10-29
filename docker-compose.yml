@@ -4,6 +4,11 @@ services:
     build: .
     ports:
       - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: health_db
+      DB_USER: user
+      DB_PASSWORD: pass
     volumes:
       - ./src:/var/www/html
     depends_on:
@@ -15,7 +20,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: testdb
+      MYSQL_DATABASE: health_db
       MYSQL_USER: user
       MYSQL_PASSWORD: pass
     ports:
