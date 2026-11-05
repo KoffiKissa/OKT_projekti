@@ -7,8 +7,8 @@
     <title>Sign in</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="grid min-h-screen min-w-[320px] place-items-center bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
-    <main class="w-full max-w-[440px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8">
+<body class="min-h-screen min-w-[320px] bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
+    <main class="mx-auto my-6 w-full max-w-[1000px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:my-0 max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8">
         <div class="mb-9 inline-flex items-center gap-[10px] text-sm font-bold tracking-[0.06em] text-[#193d2d]"><span class="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-[#c9e6c6] text-[21px] text-[#193d2d]" aria-hidden="true">+</span> WELLBEING</div>
         <h1 id="page-title" class="m-0 text-[30px] font-bold tracking-[-0.04em]">Welcome back</h1>
         <p id="page-intro" class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Sign in to continue tracking your wellbeing and goals.</p>
@@ -17,12 +17,15 @@
         <div id="welcome" class="rounded-xl bg-[#f1faf3] p-[18px] leading-[1.6] text-[#245c36]" role="status" hidden>
             <strong>You're signed in.</strong>
             <p id="user-details" class="mb-0 mt-[5px] text-sm text-[#516c58]"></p>
-            <a class="mt-3 inline-block text-sm font-bold text-[#28603e] no-underline hover:underline" href="goals.php">View and add health goals</a>
-            <a class="mt-3 inline-block text-sm font-bold text-[#28603e] no-underline hover:underline" href="entries.php">Add a new health entry</a>
+            <nav class="mt-3 grid justify-items-start gap-3" aria-label="Account navigation">
+                <a class="text-sm font-bold text-[#28603e] no-underline hover:underline" href="dashboard.php">View your progress dashboard</a>
+                <a class="text-sm font-bold text-[#28603e] no-underline hover:underline" href="goals.php">View and add health goals</a>
+                <a class="text-sm font-bold text-[#28603e] no-underline hover:underline" href="entries.php">Add a new health entry</a>
+            </nav>
             <button id="logout-button" class="mt-4 min-h-[38px] w-full cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-[13px] font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70" type="button">Log out</button>
         </div>
 
-        <form id="login-form" action="api.php" method="post">
+        <form id="login-form" class="w-full max-w-[520px]" action="api.php" method="post">
             <div class="mb-[18px]">
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="username">Username</label>
                 <input id="username" name="username" type="text" autocomplete="username"
@@ -36,7 +39,7 @@
             <button id="submit-button" type="submit" class="mt-[5px] min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Sign in</button>
         </form>
 
-        <form id="register-form" action="api.php" method="post" hidden>
+        <form id="register-form" class="w-full max-w-[520px]" action="api.php" method="post" hidden>
             <div class="mb-[18px]">
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="first-name">First name</label>
                 <input id="first-name" name="name" type="text" autocomplete="given-name"

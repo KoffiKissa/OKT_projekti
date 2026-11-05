@@ -61,15 +61,16 @@ CREATE TABLE `goals` (
   `category` enum('weight','sleep','steps','blood_pressure') DEFAULT NULL,
   `goal` decimal(10,2) NOT NULL,
   `start_date` date NOT NULL,
-  `done_by_date` date NOT NULL
+  `done_by_date` date NOT NULL,
+  `goal_done` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Vedos taulusta `goals`
 --
 
-INSERT INTO `goals` (`id`, `user_id`, `goal_name`, `category`, `goal`, `start_date`, `done_by_date`) VALUES
-(4, 3, 'Daily step target', 'steps', 7500.00, '2026-11-03', '2026-12-03');
+INSERT INTO `goals` (`id`, `user_id`, `goal_name`, `category`, `goal`, `start_date`, `done_by_date`, `goal_done`) VALUES
+(4, 3, 'Daily step target', 'steps', 7500.00, '2026-11-03', '2026-12-03', 0);
 
 -- --------------------------------------------------------
 

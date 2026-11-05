@@ -7,20 +7,23 @@
     <title>New health entry</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="grid min-h-screen min-w-[320px] place-items-center bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
-    <main id="entries-page" class="w-full max-w-[560px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8" hidden>
+<body class="min-h-screen min-w-[320px] bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
+    <main id="entries-page" class="mx-auto my-6 w-full max-w-[1000px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:my-0 max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8" hidden>
         <div class="mb-[26px] inline-flex items-center gap-[10px] text-sm font-bold tracking-[0.06em] text-[#193d2d]"><span class="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-[#c9e6c6] text-[21px] text-[#193d2d]" aria-hidden="true">+</span> WELLBEING</div>
         <div class="flex items-start justify-between gap-4">
             <div>
                 <h1 class="m-0 text-[30px] font-bold tracking-[-0.04em]">New entry</h1>
                 <p class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Record a health measurement and check it before saving.</p>
             </div>
-            <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="index.php">Back to account</a>
+            <nav class="flex flex-wrap gap-4">
+                <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="dashboard.php">Dashboard</a>
+                <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="index.php">Back to account</a>
+            </nav>
         </div>
 
         <div id="entry-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="status" hidden></div>
 
-        <form id="entry-form">
+        <form id="entry-form" class="grid grid-cols-2 gap-x-5 max-[700px]:grid-cols-1">
             <div class="mb-[18px]">
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="category">Health parameter</label>
                 <select id="category" name="category" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
@@ -39,7 +42,7 @@
                 <span id="measurement-hint" class="mt-[6px] block text-[11px] leading-[1.4] text-[#7a857d]">Choose a parameter to see the expected unit and range.</span>
             </div>
 
-            <div id="blood-pressure-fields" class="grid-cols-2 gap-[14px] max-[480px]:grid-cols-1 max-[480px]:gap-0" hidden>
+            <div id="blood-pressure-fields" class="col-span-2 grid-cols-2 gap-[14px] max-[700px]:col-span-1 max-[480px]:grid-cols-1 max-[480px]:gap-0" hidden>
                 <div class="mb-2">
                     <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="systolic">Systolic (mmHg)</label>
                     <input id="systolic" name="systolic" type="number" min="50" max="300"
@@ -53,11 +56,11 @@
                 <span class="col-span-full mb-[18px] text-[11px] leading-[1.4] text-[#7a857d] max-[480px]:col-auto">Enter whole numbers; systolic must be higher than diastolic.</span>
             </div>
 
-            <div class="mb-[18px]">
+            <div class="col-span-2 mb-[18px] max-[700px]:col-span-1">
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="date">Measurement date</label>
                 <input id="date" name="date" type="date" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <button type="submit" class="mt-[5px] min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Review entry</button>
+            <button type="submit" class="col-span-2 mt-[5px] min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[700px]:col-span-1">Review entry</button>
         </form>
 
         <section id="entry-review" class="mb-[18px] rounded-[10px] border border-[#cce5d1] bg-[#f1faf3] p-4" aria-labelledby="review-heading" hidden>
@@ -74,7 +77,7 @@
         <section aria-labelledby="entry-history-heading">
             <h2 id="entry-history-heading" class="mb-[14px] mt-[26px] text-lg font-bold tracking-[-0.02em]">Your recent entries</h2>
             <p id="entry-empty" class="rounded-[10px] bg-[#f4f6f1] p-[14px] text-sm leading-[1.5] text-[#68756c]" hidden>You haven't recorded any measurements yet.</p>
-            <ul id="entry-list" class="m-0 grid list-none gap-3 p-0"></ul>
+            <ul id="entry-list" class="m-0 grid list-none gap-3 p-0 md:grid-cols-2"></ul>
         </section>
     </main>
     <p id="loading-message" class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Checking your sign-in...</p>

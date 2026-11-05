@@ -65,6 +65,103 @@ function characterLength(string $value): int
     return $count === false ? PHP_INT_MAX : $count;
 }
 
+function goalEntryValue(string $category, string $measurement): ?float
+{
+    if ($category === 'blood_pressure') {
+        if (preg_match('/\A(\d+)\/\d+\z/', $measurement, $matches) !== 1) {
+            return null;
+        }
+
+        return (float) $matches[1];
+    }
+
+    if (!is_numeric($measurement) || !is_finite((float) $measurement)) {
+        return null;
+    }
+
+    return (float) $measurement;
+}
+
+function averageStepsForGoal(PDO $pdo, int $userId, string $startDate, string $doneByDate): float
+{
+    $statement = $pdo->prepare(
+        'SELECT COALESCE(SUM(CAST(measurement AS DECIMAL(10,2))), 0)
+         FROM health_markers
+         WHERE user_id = :user_id AND category = :category
+           AND date >= :start_date AND date <= :done_by_date'
+    );
+    $statement->execute([
+        'user_id' => $userId,
+        'category' => 'steps',
+        'start_date' => $startDate,
+        'done_by_date' => $doneByDate,
+    ]);
+    $total = (float) $statement->fetchColumn();
+    $periodStart = new DateTimeImmutable($startDate);
+    $periodEnd = new DateTimeImmutable($doneByDate);
+    $periodDays = $periodStart->diff($periodEnd)->days + 1;
+
+    return $total / $periodDays;
+}
+
+function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category): void
+{
+    $goalsStatement = $pdo->prepare(
+        'SELECT id, goal, start_date, done_by_date
+         FROM goals
+         WHERE user_id = :user_id AND category = :category
+           AND (goal_done = 0 OR goal_done IS NULL)'
+    );
+    $goalsStatement->execute([
+        'user_id' => $userId,
+        'category' => $category,
+    ]);
+
+    $entriesStatement = $pdo->prepare(
+        'SELECT measurement
+         FROM health_markers
+         WHERE user_id = :user_id AND category = :category
+           AND date >= :start_date AND date <= :done_by_date'
+    );
+    $completeStatement = $pdo->prepare(
+        'UPDATE goals SET goal_done = 1
+         WHERE id = :id AND user_id = :user_id
+           AND (goal_done = 0 OR goal_done IS NULL)'
+    );
+
+    foreach ($goalsStatement->fetchAll() as $goal) {
+        $entriesStatement->execute([
+            'user_id' => $userId,
+            'category' => $category,
+            'start_date' => $goal['start_date'],
+            'done_by_date' => $goal['done_by_date'],
+        ]);
+
+        $total = 0.0;
+        foreach ($entriesStatement->fetchAll() as $entry) {
+            $value = goalEntryValue($category, (string) $entry['measurement']);
+            if ($value !== null) {
+                $total += $value;
+            }
+        }
+
+        if ($category === 'steps') {
+            $periodStart = new DateTimeImmutable((string) $goal['start_date']);
+            $periodEnd = new DateTimeImmutable((string) $goal['done_by_date']);
+            $periodDays = $periodStart->diff($periodEnd)->days + 1;
+            $reached = ($total / $periodDays) >= (float) $goal['goal'];
+        } else {
+            $reached = $total >= (float) $goal['goal'];
+        }
+        if ($reached) {
+            $completeStatement->execute([
+                'id' => (int) $goal['id'],
+                'user_id' => $userId,
+            ]);
+        }
+    }
+}
+
 $method = $_SERVER['REQUEST_METHOD'] ?? '';
 
 if ($method !== 'GET' && $method !== 'POST') {
@@ -87,7 +184,7 @@ try {
 
         if (($_GET['resource'] ?? '') === 'goals') {
             $statement = $pdo->prepare(
-                'SELECT id, goal_name, category, goal, start_date, done_by_date
+                'SELECT id, goal_name, category, goal, start_date, done_by_date, goal_done
                  FROM goals
                  WHERE user_id = :user_id
                  ORDER BY start_date ASC, id DESC'
@@ -96,6 +193,15 @@ try {
             $goals = $statement->fetchAll();
             foreach ($goals as &$savedGoal) {
                 $savedGoal['goal'] = (float) $savedGoal['goal'];
+                $savedGoal['goal_done'] = (bool) ((int) $savedGoal['goal_done']);
+                $savedGoal['steps_average'] = $savedGoal['category'] === 'steps'
+                    ? averageStepsForGoal(
+                        $pdo,
+                        (int) $user['user_id'],
+                        $savedGoal['start_date'],
+                        $savedGoal['done_by_date']
+                    )
+                    : null;
             }
             unset($savedGoal);
             respond(200, ['goals' => $goals]);
@@ -134,7 +240,7 @@ try {
     $username = $credentials['username'] ?? null;
     $password = $credentials['password'] ?? null;
 
-    if (!is_string($action) || !in_array($action, ['login', 'register', 'logout', 'create_goal', 'update_goal', 'delete_goal', 'create_entry'], true)) {
+    if (!is_string($action) || !in_array($action, ['login', 'register', 'logout', 'create_goal', 'update_goal', 'delete_goal', 'mark_goal_done', 'mark_goal_not_done', 'create_entry'], true)) {
         respond(400, ['error' => 'Invalid account action.']);
     }
 
@@ -161,8 +267,7 @@ try {
         }
 
         $category = $credentials['category'] ?? null;
-        $startDate = $credentials['start_date'] ?? null;
-        $doneByDate = $credentials['done_by_date'] ?? null;
+        $date = $credentials['date'] ?? null;
         $categories = ['weight', 'sleep', 'steps', 'blood_pressure'];
         if (!is_string($category) || !in_array($category, $categories, true)) {
             respond(400, ['error' => 'Choose a valid health parameter.']);
@@ -228,10 +333,12 @@ try {
             'measurement' => $measurement,
             'date' => $entryDate->format('Y-m-d'),
         ]);
+        $entryId = (int) $pdo->lastInsertId();
+        completeGoalsReachedByEntries($pdo, (int) $_SESSION['user_id'], $category);
 
         respond(201, [
             'entry' => [
-                'id' => (int) $pdo->lastInsertId(),
+                'id' => $entryId,
                 'category' => $category,
                 'measurement' => $measurement,
                 'date' => $entryDate->format('Y-m-d'),
@@ -239,7 +346,7 @@ try {
         ]);
     }
 
-    $goalActions = ['create_goal', 'update_goal', 'delete_goal'];
+    $goalActions = ['create_goal', 'update_goal', 'delete_goal', 'mark_goal_done', 'mark_goal_not_done'];
     if (in_array($action, $goalActions, true)) {
         if (!isset($_SESSION['user_id'])) {
             respond(401, ['error' => 'Please sign in before adding a goal.']);
@@ -247,7 +354,7 @@ try {
 
         $goalId = $credentials['id'] ?? null;
         if (
-            in_array($action, ['update_goal', 'delete_goal'], true)
+            in_array($action, ['update_goal', 'delete_goal', 'mark_goal_done', 'mark_goal_not_done'], true)
             && (!is_int($goalId) || $goalId < 1)
         ) {
             respond(400, ['error' => 'A valid goal ID is required.']);
@@ -268,10 +375,62 @@ try {
             respond(200, ['deleted' => true, 'id' => $goalId]);
         }
 
+        if ($action === 'mark_goal_done') {
+            $pdo = connectToDatabase();
+            $check = $pdo->prepare('SELECT id FROM goals WHERE id = :id AND user_id = :user_id');
+            $check->execute([
+                'id' => $goalId,
+                'user_id' => (int) $_SESSION['user_id'],
+            ]);
+            if ($check->fetch() === false) {
+                respond(404, ['error' => 'Goal not found.']);
+            }
+
+            $statement = $pdo->prepare(
+                'UPDATE goals SET goal_done = 1 WHERE id = :id AND user_id = :user_id'
+            );
+            $statement->execute([
+                'id' => $goalId,
+                'user_id' => (int) $_SESSION['user_id'],
+            ]);
+
+            respond(200, ['goal' => ['id' => $goalId, 'goal_done' => true]]);
+        }
+
+        if ($action === 'mark_goal_not_done') {
+            $pdo = connectToDatabase();
+            $check = $pdo->prepare(
+                'SELECT done_by_date FROM goals WHERE id = :id AND user_id = :user_id'
+            );
+            $check->execute([
+                'id' => $goalId,
+                'user_id' => (int) $_SESSION['user_id'],
+            ]);
+            $goal = $check->fetch();
+            if ($goal === false) {
+                respond(404, ['error' => 'Goal not found.']);
+            }
+
+            if ($goal['done_by_date'] < (new DateTimeImmutable('today'))->format('Y-m-d')) {
+                respond(400, ['error' => 'A goal can only be marked unfinished before its end date.']);
+            }
+
+            $statement = $pdo->prepare(
+                'UPDATE goals SET goal_done = 0 WHERE id = :id AND user_id = :user_id'
+            );
+            $statement->execute([
+                'id' => $goalId,
+                'user_id' => (int) $_SESSION['user_id'],
+            ]);
+
+            respond(200, ['goal' => ['id' => $goalId, 'goal_done' => false]]);
+        }
+
         $category = $credentials['category'] ?? null;
         $goalName = $credentials['goal_name'] ?? null;
         $goal = $credentials['goal'] ?? null;
-        $date = $credentials['date'] ?? null;
+        $startDate = $credentials['start_date'] ?? null;
+        $doneByDate = $credentials['done_by_date'] ?? null;
         $categories = ['weight', 'sleep', 'steps', 'blood_pressure'];
 
         if (!is_string($goalName) || trim($goalName) === '' || characterLength(trim($goalName)) > 100) {
@@ -392,8 +551,8 @@ try {
             }
         } else {
             $statement = $pdo->prepare(
-                'INSERT INTO goals (user_id, goal_name, category, goal, start_date, done_by_date)
-                 VALUES (:user_id, :goal_name, :category, :goal, :start_date, :done_by_date)'
+                'INSERT INTO goals (user_id, goal_name, category, goal, start_date, done_by_date, goal_done)
+                 VALUES (:user_id, :goal_name, :category, :goal, :start_date, :done_by_date, 0)'
             );
             $statement->execute([
                 'user_id' => (int) $_SESSION['user_id'],
@@ -406,6 +565,24 @@ try {
             $goalId = (int) $pdo->lastInsertId();
         }
 
+        completeGoalsReachedByEntries($pdo, (int) $_SESSION['user_id'], $category);
+        $doneStatement = $pdo->prepare(
+            'SELECT goal_done FROM goals WHERE id = :id AND user_id = :user_id'
+        );
+        $doneStatement->execute([
+            'id' => $goalId,
+            'user_id' => (int) $_SESSION['user_id'],
+        ]);
+        $goalDone = (bool) ((int) $doneStatement->fetchColumn());
+        $stepsAverage = $category === 'steps'
+            ? averageStepsForGoal(
+                $pdo,
+                (int) $_SESSION['user_id'],
+                $startDateValue->format('Y-m-d'),
+                $doneByDateValue->format('Y-m-d')
+            )
+            : null;
+
         respond($action === 'create_goal' ? 201 : 200, [
             'goal' => [
                 'id' => $goalId,
@@ -414,6 +591,8 @@ try {
                 'goal' => (float) $goal,
                 'start_date' => $startDateValue->format('Y-m-d'),
                 'done_by_date' => $doneByDateValue->format('Y-m-d'),
+                'goal_done' => $goalDone,
+                'steps_average' => $stepsAverage,
             ],
         ]);
     }
