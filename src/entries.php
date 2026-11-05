@@ -5,25 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f4f6f1">
     <title>New health entry</title>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <main id="entries-page" class="card goal-page-card" hidden>
-        <div class="brand"><span class="brand-mark" aria-hidden="true">+</span> WELLBEING</div>
-        <div class="goal-page-header">
+<body class="grid min-h-screen min-w-[320px] place-items-center bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
+    <main id="entries-page" class="w-full max-w-[560px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8" hidden>
+        <div class="mb-[26px] inline-flex items-center gap-[10px] text-sm font-bold tracking-[0.06em] text-[#193d2d]"><span class="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-[#c9e6c6] text-[21px] text-[#193d2d]" aria-hidden="true">+</span> WELLBEING</div>
+        <div class="flex items-start justify-between gap-4">
             <div>
-                <h1>New entry</h1>
-                <p class="intro">Record a health measurement and check it before saving.</p>
+                <h1 class="m-0 text-[30px] font-bold tracking-[-0.04em]">New entry</h1>
+                <p class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Record a health measurement and check it before saving.</p>
             </div>
-            <a class="back-link" href="index.php">Back to account</a>
+            <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="index.php">Back to account</a>
         </div>
 
-        <div id="entry-message" class="message" role="status" hidden></div>
+        <div id="entry-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="status" hidden></div>
 
         <form id="entry-form">
-            <div class="field">
-                <label for="category">Health parameter</label>
-                <select id="category" name="category" required>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="category">Health parameter</label>
+                <select id="category" name="category" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
                     <option value="">Choose a parameter</option>
                     <option value="weight">Weight (kg)</option>
                     <option value="sleep">Sleep (h)</option>
@@ -32,52 +32,52 @@
                 </select>
             </div>
 
-            <div id="single-measurement-field" class="field">
-                <label id="measurement-label" for="measurement">Measurement</label>
+            <div id="single-measurement-field" class="mb-[18px]">
+                <label id="measurement-label" class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="measurement">Measurement</label>
                 <input id="measurement" name="measurement" type="number" min="0" max="500"
-                       step="0.01" inputmode="decimal" placeholder="Choose a parameter first" disabled required>
-                <span id="measurement-hint" class="field-hint">Choose a parameter to see the expected unit and range.</span>
+                       step="0.01" inputmode="decimal" placeholder="Choose a parameter first" disabled required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
+                <span id="measurement-hint" class="mt-[6px] block text-[11px] leading-[1.4] text-[#7a857d]">Choose a parameter to see the expected unit and range.</span>
             </div>
 
-            <div id="blood-pressure-fields" class="entry-number-row" hidden>
-                <div class="field">
-                    <label for="systolic">Systolic (mmHg)</label>
+            <div id="blood-pressure-fields" class="grid grid-cols-2 gap-[14px] max-[480px]:grid-cols-1 max-[480px]:gap-0" hidden>
+                <div class="mb-2">
+                    <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="systolic">Systolic (mmHg)</label>
                     <input id="systolic" name="systolic" type="number" min="50" max="300"
-                           step="1" inputmode="numeric" placeholder="e.g. 120" disabled required>
+                           step="1" inputmode="numeric" placeholder="e.g. 120" disabled required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
                 </div>
-                <div class="field">
-                    <label for="diastolic">Diastolic (mmHg)</label>
+                <div class="mb-2">
+                    <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="diastolic">Diastolic (mmHg)</label>
                     <input id="diastolic" name="diastolic" type="number" min="30" max="200"
-                           step="1" inputmode="numeric" placeholder="e.g. 80" disabled required>
+                           step="1" inputmode="numeric" placeholder="e.g. 80" disabled required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
                 </div>
-                <span class="field-hint">Enter whole numbers; systolic must be higher than diastolic.</span>
+                <span class="col-span-full mb-[18px] text-[11px] leading-[1.4] text-[#7a857d] max-[480px]:col-auto">Enter whole numbers; systolic must be higher than diastolic.</span>
             </div>
 
-            <div class="field">
-                <label for="date">Measurement date</label>
-                <input id="date" name="date" type="date" required>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="date">Measurement date</label>
+                <input id="date" name="date" type="date" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <button type="submit">Review entry</button>
+            <button type="submit" class="mt-[5px] min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Review entry</button>
         </form>
 
-        <section id="entry-review" class="goal-review" aria-labelledby="review-heading" hidden>
-            <h2 id="review-heading">Review your entry</h2>
-            <p><strong>Health parameter:</strong> <span id="review-category"></span></p>
-            <p><strong>Measurement:</strong> <span id="review-measurement"></span></p>
-            <p><strong>Date:</strong> <span id="review-date"></span></p>
-            <div class="goal-review-actions">
-                <button id="edit-entry" class="secondary-button" type="button">Make changes</button>
-                <button id="confirm-entry" type="button">Confirm and save</button>
+        <section id="entry-review" class="mb-[18px] rounded-[10px] border border-[#cce5d1] bg-[#f1faf3] p-4" aria-labelledby="review-heading" hidden>
+            <h2 id="review-heading" class="mb-3 mt-0 text-[17px] font-bold text-[#245c36]">Review your entry</h2>
+            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Health parameter:</strong> <span id="review-category"></span></p>
+            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Measurement:</strong> <span id="review-measurement"></span></p>
+            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Date:</strong> <span id="review-date"></span></p>
+            <div class="mt-4 grid grid-cols-2 gap-[10px] max-[480px]:grid-cols-1">
+                <button id="edit-entry" class="mt-0 min-h-12 w-auto cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-sm font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70" type="button">Make changes</button>
+                <button id="confirm-entry" type="button" class="mt-0 min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Confirm and save</button>
             </div>
         </section>
 
         <section aria-labelledby="entry-history-heading">
-            <h2 id="entry-history-heading">Your recent entries</h2>
-            <p id="entry-empty" class="goal-empty" hidden>You haven't recorded any measurements yet.</p>
-            <ul id="entry-list" class="goal-list"></ul>
+            <h2 id="entry-history-heading" class="mb-[14px] mt-[26px] text-lg font-bold tracking-[-0.02em]">Your recent entries</h2>
+            <p id="entry-empty" class="rounded-[10px] bg-[#f4f6f1] p-[14px] text-sm leading-[1.5] text-[#68756c]" hidden>You haven't recorded any measurements yet.</p>
+            <ul id="entry-list" class="m-0 grid list-none gap-3 p-0"></ul>
         </section>
     </main>
-    <p id="loading-message" class="intro">Checking your sign-in...</p>
+    <p id="loading-message" class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Checking your sign-in...</p>
 
     <script>
         const page = document.getElementById('entries-page');
@@ -140,7 +140,12 @@
 
         function showMessage(text, success = false) {
             message.textContent = text;
-            message.classList.toggle('success', success);
+            message.classList.toggle('border-[#cce5d1]', success);
+            message.classList.toggle('bg-[#f1faf3]', success);
+            message.classList.toggle('text-[#245c36]', success);
+            message.classList.toggle('border-[#f0d2cf]', !success);
+            message.classList.toggle('bg-[#fff5f4]', !success);
+            message.classList.toggle('text-[#832e28]', !success);
             message.hidden = false;
         }
 
@@ -154,12 +159,15 @@
 
         function addEntryToList(entry) {
             const item = document.createElement('li');
-            item.className = 'goal-item';
+            item.className = 'rounded-[10px] border border-[#e6e9e1] bg-[#fbfcfa] p-[14px]';
             const title = document.createElement('strong');
+            title.className = 'mb-[5px] block text-sm font-bold text-[#26372d]';
             title.textContent = categoryLabels[entry.category] || entry.category;
             const value = document.createElement('p');
+            value.className = 'm-0 text-[13px] leading-[1.5] text-[#68756c]';
             value.textContent = formatMeasurement(entry);
             const date = document.createElement('time');
+            date.className = 'mt-[5px] block text-[13px] leading-[1.5] text-[#68756c]';
             date.dateTime = entry.date;
             date.textContent = `Measured: ${entry.date}`;
             item.append(title, value, date);

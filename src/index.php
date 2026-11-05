@@ -5,67 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f4f6f1">
     <title>Sign in</title>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <main class="card">
-        <div class="brand"><span class="brand-mark" aria-hidden="true">+</span> WELLBEING</div>
-        <h1 id="page-title">Welcome back</h1>
-        <p id="page-intro" class="intro">Sign in to continue tracking your wellbeing and goals.</p>
+<body class="grid min-h-screen min-w-[320px] place-items-center bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
+    <main class="w-full max-w-[440px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8">
+        <div class="mb-9 inline-flex items-center gap-[10px] text-sm font-bold tracking-[0.06em] text-[#193d2d]"><span class="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-[#c9e6c6] text-[21px] text-[#193d2d]" aria-hidden="true">+</span> WELLBEING</div>
+        <h1 id="page-title" class="m-0 text-[30px] font-bold tracking-[-0.04em]">Welcome back</h1>
+        <p id="page-intro" class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Sign in to continue tracking your wellbeing and goals.</p>
 
-        <div id="message" class="message" role="alert" hidden></div>
-        <div id="welcome" class="welcome" role="status" hidden>
+        <div id="message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="alert" hidden></div>
+        <div id="welcome" class="rounded-xl bg-[#f1faf3] p-[18px] leading-[1.6] text-[#245c36]" role="status" hidden>
             <strong>You're signed in.</strong>
-            <p id="user-details"></p>
-            <a class="goal-link" href="goals.php">View and add health goals</a>
-            <a class="goal-link" href="entries.php">Add a new health entry</a>
+            <p id="user-details" class="mb-0 mt-[5px] text-sm text-[#516c58]"></p>
+            <a class="mt-3 inline-block text-sm font-bold text-[#28603e] no-underline hover:underline" href="goals.php">View and add health goals</a>
+            <a class="mt-3 inline-block text-sm font-bold text-[#28603e] no-underline hover:underline" href="entries.php">Add a new health entry</a>
         </div>
 
         <form id="login-form" action="api.php" method="post">
-            <div class="field">
-                <label for="username">Username</label>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="username">Username</label>
                 <input id="username" name="username" type="text" autocomplete="username"
-                       maxlength="50" required>
+                       maxlength="50" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <div class="field">
-                <label for="password">Password</label>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="password">Password</label>
                 <input id="password" name="password" type="password" autocomplete="current-password"
-                       required>
+                       required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <button id="submit-button" type="submit">Sign in</button>
+            <button id="submit-button" type="submit" class="mt-[5px] min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Sign in</button>
         </form>
 
         <form id="register-form" action="api.php" method="post" hidden>
-            <div class="field">
-                <label for="first-name">First name</label>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="first-name">First name</label>
                 <input id="first-name" name="name" type="text" autocomplete="given-name"
-                       maxlength="50" required disabled>
+                       maxlength="50" required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <div class="field">
-                <label for="last-name">Last name</label>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="last-name">Last name</label>
                 <input id="last-name" name="last_name" type="text" autocomplete="family-name"
-                       maxlength="50" required disabled>
+                       maxlength="50" required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <div class="field">
-                <label for="new-username">Username</label>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="new-username">Username</label>
                 <input id="new-username" name="username" type="text" autocomplete="username"
-                       minlength="3" maxlength="50" pattern="[A-Za-z0-9._-]+" required disabled>
+                       minlength="3" maxlength="50" pattern="[A-Za-z0-9._-]+" required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <div class="field">
-                <label for="new-password">Password</label>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="new-password">Password</label>
                 <input id="new-password" name="password" type="password" autocomplete="new-password"
-                       minlength="8" maxlength="72" required disabled>
+                       minlength="8" maxlength="72" required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <div class="field">
-                <label for="password-confirmation">Confirm password</label>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="password-confirmation">Confirm password</label>
                 <input id="password-confirmation" name="password_confirmation" type="password"
-                       autocomplete="new-password" minlength="8" maxlength="72" required disabled>
+                       autocomplete="new-password" minlength="8" maxlength="72" required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <button id="register-button" type="submit">Create account</button>
+            <button id="register-button" type="submit" class="mt-[5px] min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Create account</button>
         </form>
-        <p class="account-switch">
+        <p class="mb-0 mt-5 text-center text-[13px] text-[#738077]">
             <span id="switch-prompt">New here?</span>
-            <button id="switch-button" class="text-button" type="button">Create an account</button>
+            <button id="switch-button" class="ml-1 min-h-0 w-auto cursor-pointer border-0 bg-transparent p-[2px] text-[13px] text-[#28603e] hover:bg-transparent hover:text-[#1d4d31] hover:underline" type="button">Create an account</button>
         </p>
         <noscript>JavaScript must be enabled to sign in.</noscript>
     </main>
@@ -93,7 +93,6 @@
 
         function showError(text) {
             message.textContent = text;
-            message.classList.remove('success');
             message.hidden = false;
         }
 

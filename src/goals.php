@@ -5,25 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f4f6f1">
     <title>Your health goals</title>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <main id="goals-page" class="card goal-page-card" hidden>
-        <div class="brand"><span class="brand-mark" aria-hidden="true">+</span> WELLBEING</div>
-        <div class="goal-page-header">
+<body class="grid min-h-screen min-w-[320px] place-items-center bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
+    <main id="goals-page" class="w-full max-w-[560px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8" hidden>
+        <div class="mb-[26px] inline-flex items-center gap-[10px] text-sm font-bold tracking-[0.06em] text-[#193d2d]"><span class="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-[#c9e6c6] text-[21px] text-[#193d2d]" aria-hidden="true">+</span> WELLBEING</div>
+        <div class="flex items-start justify-between gap-4">
             <div>
-                <h1>Health goals</h1>
-                <p class="intro">Choose a health parameter and set a goal to work toward.</p>
+                <h1 class="m-0 text-[30px] font-bold tracking-[-0.04em]">Health goals</h1>
+                <p class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Choose a health parameter and set a goal to work toward.</p>
             </div>
-            <a class="back-link" href="index.php">Back to account</a>
+            <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="index.php">Back to account</a>
         </div>
 
-        <div id="goal-message" class="message" role="alert" hidden></div>
+        <div id="goal-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="alert" hidden></div>
 
-        <form id="goal-form" class="goal-form">
-            <div class="field">
-                <label for="category">Health parameter</label>
-                <select id="category" name="category" required>
+        <form id="goal-form">
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="category">Health parameter</label>
+                <select id="category" name="category" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
                     <option value="">Choose a parameter</option>
                     <option value="weight">Weight (kg)</option>
                     <option value="sleep">Sleep (h)</option>
@@ -31,40 +31,40 @@
                     <option value="blood_pressure">Blood pressure (mmHg)</option>
                 </select>
             </div>
-            <div class="field">
-                <label for="goal">Target value <span id="goal-unit"></span></label>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="goal">Target value <span id="goal-unit"></span></label>
                 <input id="goal" name="goal" type="number" min="0.01" max="99999999.99"
-                       step="0.01" inputmode="decimal" placeholder="Enter a number" required>
-                <span id="goal-hint" class="field-hint">Choose a health parameter to see its unit.</span>
+                       step="0.01" inputmode="decimal" placeholder="Enter a number" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
+                <span id="goal-hint" class="mt-[6px] block text-[11px] leading-[1.4] text-[#7a857d]">Choose a health parameter to see its unit.</span>
             </div>
-            <div class="field">
-                <label for="date">Target date</label>
-                <input id="date" name="date" type="date" required>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="date">Target date</label>
+                <input id="date" name="date" type="date" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <div class="goal-form-actions">
-                <button id="review-goal-button" type="submit">Review goal</button>
-                <button id="cancel-edit" class="secondary-button" type="button" hidden>Cancel edit</button>
+            <div class="mt-3 flex gap-[9px] max-[480px]:flex-col">
+                <button id="review-goal-button" type="submit" class="mt-0 min-h-[38px] w-auto flex-1 cursor-pointer rounded-[9px] border-0 bg-[#28603e] px-[13px] py-2 text-[13px] font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[480px]:w-full">Review goal</button>
+                <button id="cancel-edit" type="button" class="mt-0 min-h-[38px] w-auto cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-[13px] font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[480px]:w-full" hidden>Cancel edit</button>
             </div>
         </form>
 
-        <section id="goal-review" class="goal-review" aria-labelledby="review-heading" hidden>
-            <h2 id="review-heading">Review your goal</h2>
-            <p><strong>Health parameter:</strong> <span id="review-category"></span></p>
-            <p><strong>Goal:</strong> <span id="review-goal"></span></p>
-            <p><strong>Target date:</strong> <span id="review-date"></span></p>
-            <div class="goal-review-actions">
-                <button id="edit-goal" class="secondary-button" type="button">Make changes</button>
-                <button id="confirm-goal" type="button">Confirm and save</button>
+        <section id="goal-review" class="mb-[18px] rounded-[10px] border border-[#cce5d1] bg-[#f1faf3] p-4" aria-labelledby="review-heading" hidden>
+            <h2 id="review-heading" class="mb-3 mt-0 text-[17px] font-bold text-[#245c36]">Review your goal</h2>
+            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Health parameter:</strong> <span id="review-category"></span></p>
+            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Goal:</strong> <span id="review-goal"></span></p>
+            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Target date:</strong> <span id="review-date"></span></p>
+            <div class="mt-4 grid grid-cols-2 gap-[10px] max-[480px]:grid-cols-1">
+                <button id="edit-goal" class="mt-0 min-h-12 w-auto cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-sm font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70" type="button">Make changes</button>
+                <button id="confirm-goal" type="button" class="mt-0 min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Confirm and save</button>
             </div>
         </section>
 
         <section aria-labelledby="saved-goals-heading">
-            <h2 id="saved-goals-heading">Your saved goals</h2>
-            <p id="goal-empty" class="goal-empty" hidden>You haven't added any goals yet.</p>
-            <ul id="goal-list" class="goal-list"></ul>
+            <h2 id="saved-goals-heading" class="mb-[14px] mt-[26px] text-lg font-bold tracking-[-0.02em]">Your saved goals</h2>
+            <p id="goal-empty" class="rounded-[10px] bg-[#f4f6f1] p-[14px] text-sm leading-[1.5] text-[#68756c]" hidden>You haven't added any goals yet.</p>
+            <ul id="goal-list" class="m-0 grid list-none gap-3 p-0"></ul>
         </section>
     </main>
-    <p id="loading-message" class="intro">Checking your sign-in...</p>
+    <p id="loading-message" class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Checking your sign-in...</p>
 
     <script>
         const page = document.getElementById('goals-page');
@@ -111,34 +111,42 @@
 
         function showMessage(text, success = false) {
             message.textContent = text;
-            message.classList.toggle('success', success);
+            message.classList.toggle('border-[#cce5d1]', success);
+            message.classList.toggle('bg-[#f1faf3]', success);
+            message.classList.toggle('text-[#245c36]', success);
+            message.classList.toggle('border-[#f0d2cf]', !success);
+            message.classList.toggle('bg-[#fff5f4]', !success);
+            message.classList.toggle('text-[#832e28]', !success);
             message.hidden = false;
         }
 
         function addGoalToList(goal) {
             const existing = goalList.querySelector(`[data-goal-id="${goal.id}"]`);
             const item = existing || document.createElement('li');
-            item.className = 'goal-item';
+            item.className = 'rounded-[10px] border border-[#e6e9e1] bg-[#fbfcfa] p-[14px]';
             item.dataset.goalId = goal.id;
 
             const title = document.createElement('strong');
+            title.className = 'mb-[5px] block text-sm font-bold text-[#26372d]';
             title.textContent = categoryLabels[goal.category] || goal.category;
             const description = document.createElement('p');
+            description.className = 'm-0 text-[13px] leading-[1.5] text-[#68756c]';
             description.textContent = `${goal.goal} ${goalUnits[goal.category]?.unit || ''}`.trim();
             const date = document.createElement('time');
+            date.className = 'mt-[5px] block text-[13px] leading-[1.5] text-[#68756c]';
             date.dateTime = goal.date;
             date.textContent = `Target date: ${goal.date}`;
 
             const actions = document.createElement('div');
-            actions.className = 'goal-item-actions';
+            actions.className = 'mt-3 flex gap-[9px]';
             const editButton = document.createElement('button');
             editButton.type = 'button';
-            editButton.className = 'secondary-button';
+            editButton.className = 'min-h-[38px] w-auto cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-[13px] font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70';
             editButton.dataset.goalAction = 'edit';
             editButton.textContent = 'Modify';
             const deleteButton = document.createElement('button');
             deleteButton.type = 'button';
-            deleteButton.className = 'delete-button';
+            deleteButton.className = 'min-h-[38px] w-auto cursor-pointer rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[13px] py-2 text-[13px] font-bold text-[#832e28] hover:bg-[#fce9e7] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70';
             deleteButton.dataset.goalAction = 'delete';
             deleteButton.textContent = 'Delete';
             actions.append(editButton, deleteButton);
