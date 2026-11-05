@@ -89,11 +89,12 @@
             return Number.isFinite(value) ? value : null;
         }
 
-        function calculateProgress(goal, entries) {
+        function calculateProgress(goal, entries, today) {
             const matchingEntries = entries.filter((entry) =>
                 entry.category === goal.category
                 && entry.date >= goal.start_date
                 && entry.date <= goal.done_by_date
+                && (goal.category !== 'steps' || entry.date <= today)
             );
             const total = matchingEntries.reduce((sum, entry) => {
                 const value = parseEntryValue(entry);
@@ -105,8 +106,11 @@
             }
 
             const start = new Date(`${goal.start_date}T00:00:00Z`);
-            const end = new Date(`${goal.done_by_date}T00:00:00Z`);
-            const days = Math.floor((end - start) / 86400000) + 1;
+            const elapsedEnd = goal.done_by_date < today ? goal.done_by_date : today;
+            const end = new Date(`${elapsedEnd}T00:00:00Z`);
+            const days = elapsedEnd >= goal.start_date
+                ? Math.floor((end - start) / 86400000) + 1
+                : 0;
             return { value: days > 0 ? total / days : 0, recorded: matchingEntries.length };
         }
 
@@ -128,7 +132,7 @@
         }
 
         function renderGoal(goal, entries, today) {
-            const progress = calculateProgress(goal, entries);
+            const progress = calculateProgress(goal, entries, today);
             const target = Number(goal.goal);
             const percent = target > 0 ? Math.min((progress.value / target) * 100, 100) : 0;
             const status = goalStatus(goal, today);

@@ -21,7 +21,9 @@
             </nav>
         </div>
 
-        <div id="goal-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="alert" hidden></div>
+        <div id="goal-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="alert" hidden>
+            <button id="cancel-saved-goal" class="ml-3 cursor-pointer rounded-[7px] border border-[#dce2da] bg-white px-3 py-1 font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] disabled:cursor-wait disabled:opacity-70" type="button" hidden>Cancel</button>
+        </div>
 
         <form id="goal-form" class="grid grid-cols-2 gap-x-5 max-[700px]:grid-cols-1">
             <div class="mb-[18px]">
@@ -54,23 +56,10 @@
                 <input id="done-by-date" name="done_by_date" type="date" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
             <div class="col-span-2 mt-3 flex gap-[9px] max-[700px]:col-span-1 max-[480px]:flex-col">
-                <button id="review-goal-button" type="submit" class="mt-0 min-h-[38px] w-auto flex-1 cursor-pointer rounded-[9px] border-0 bg-[#28603e] px-[13px] py-2 text-[13px] font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[480px]:w-full">Review goal</button>
-                <button id="cancel-edit" type="button" class="mt-0 min-h-[38px] w-auto cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-[13px] font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[480px]:w-full" hidden>Cancel edit</button>
+                <button id="save-goal-button" type="submit" class="mt-0 min-h-[38px] w-auto flex-1 cursor-pointer rounded-[9px] border-0 bg-[#28603e] px-[13px] py-2 text-[13px] font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[480px]:w-full">Save goal</button>
+                <button id="cancel-edit" type="button" class="mt-0 min-h-[38px] w-auto cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-[13px] font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[480px]:w-full" hidden>Cancel changes</button>
             </div>
         </form>
-
-        <section id="goal-review" class="mb-[18px] rounded-[10px] border border-[#cce5d1] bg-[#f1faf3] p-4" aria-labelledby="review-heading" hidden>
-            <h2 id="review-heading" class="mb-3 mt-0 text-[17px] font-bold text-[#245c36]">Review your goal</h2>
-            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Name:</strong> <span id="review-name"></span></p>
-            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Health parameter:</strong> <span id="review-category"></span></p>
-            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Goal:</strong> <span id="review-goal"></span></p>
-            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Start date:</strong> <span id="review-start-date"></span></p>
-            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>End date:</strong> <span id="review-done-by-date"></span></p>
-            <div class="mt-4 grid grid-cols-2 gap-[10px] max-[480px]:grid-cols-1">
-                <button id="edit-goal" class="mt-0 min-h-12 w-auto cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-sm font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70" type="button">Make changes</button>
-                <button id="confirm-goal" type="button" class="mt-0 min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Confirm and save</button>
-            </div>
-        </section>
 
         <section aria-labelledby="saved-goals-heading">
             <h2 id="saved-goals-heading" class="mb-[14px] mt-[26px] text-lg font-bold tracking-[-0.02em]">Your saved goals</h2>
@@ -84,11 +73,10 @@
         const page = document.getElementById('goals-page');
         const loadingMessage = document.getElementById('loading-message');
         const message = document.getElementById('goal-message');
+        const cancelSavedGoalButton = document.getElementById('cancel-saved-goal');
         const form = document.getElementById('goal-form');
-        const review = document.getElementById('goal-review');
         const goalList = document.getElementById('goal-list');
         const emptyMessage = document.getElementById('goal-empty');
-        const confirmButton = document.getElementById('confirm-goal');
         const categoryInput = document.getElementById('category');
         const nameInput = document.getElementById('goal-name');
         const startDateInput = document.getElementById('start-date');
@@ -96,8 +84,7 @@
         const goalInput = document.getElementById('goal');
         const goalUnit = document.getElementById('goal-unit');
         const goalHint = document.getElementById('goal-hint');
-        const reviewHeading = document.getElementById('review-heading');
-        const reviewButton = document.getElementById('review-goal-button');
+        const saveButton = document.getElementById('save-goal-button');
         const cancelEditButton = document.getElementById('cancel-edit');
         const categoryLabels = {
             weight: 'Weight (kg)',
@@ -111,8 +98,9 @@
             steps: { label: ' (steps/day average)', unit: 'steps/day', min: '1', step: '1', hint: 'Enter the average daily steps you want to achieve during this goal period.' },
             blood_pressure: { label: ' (systolic mmHg)', unit: 'systolic mmHg', min: '1', step: '1', hint: 'Enter a whole-number systolic blood pressure target in mmHg.' }
         };
-        let reviewedGoal = null;
+        let goalToSave = null;
         let editingGoalId = null;
+        let cancelSavedGoal = null;
         const savedGoals = new Map();
 
         async function readResponse(response) {
@@ -126,8 +114,14 @@
             return data;
         }
 
-        function showMessage(text, success = false) {
+        function showMessage(text, success = false, showCancel = false) {
             message.textContent = text;
+            cancelSavedGoalButton.hidden = !showCancel;
+            if (showCancel) {
+                message.append(cancelSavedGoalButton);
+            } else {
+                cancelSavedGoal = null;
+            }
             message.classList.toggle('border-[#cce5d1]', success);
             message.classList.toggle('bg-[#f1faf3]', success);
             message.classList.toggle('text-[#245c36]', success);
@@ -237,19 +231,19 @@
 
         function stopEditing() {
             editingGoalId = null;
-            reviewedGoal = null;
-            review.hidden = true;
+            goalToSave = null;
             form.hidden = false;
             form.reset();
             updateDateRangeConstraints();
             setGoalCategory('');
-            reviewButton.textContent = 'Review goal';
+            saveButton.textContent = 'Save goal';
             cancelEditButton.hidden = true;
-            reviewHeading.textContent = 'Review your goal';
         }
 
         function beginEditing(goal) {
             editingGoalId = goal.id;
+            cancelSavedGoal = null;
+            cancelSavedGoalButton.hidden = true;
             form.reset();
             nameInput.value = goal.goal_name || '';
             setGoalCategory(goal.category);
@@ -257,11 +251,9 @@
             startDateInput.value = goal.start_date;
             doneByDateInput.value = goal.done_by_date;
             updateDateRangeConstraints();
-            review.hidden = true;
             form.hidden = false;
-            reviewButton.textContent = 'Review changes';
+            saveButton.textContent = 'Save changes';
             cancelEditButton.hidden = false;
-            reviewHeading.textContent = 'Review your changes';
             message.hidden = true;
             form.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -278,7 +270,7 @@
         startDateInput.addEventListener('change', updateDateRangeConstraints);
         doneByDateInput.addEventListener('change', updateDateRangeConstraints);
 
-        form.addEventListener('submit', (event) => {
+        form.addEventListener('submit', async (event) => {
             event.preventDefault();
             if (!form.reportValidity()) {
                 return;
@@ -286,7 +278,7 @@
 
             const values = new FormData(form);
             const goalValue = Number(values.get('goal'));
-            reviewedGoal = {
+            goalToSave = {
                 goal_name: values.get('goal_name').trim(),
                 category: values.get('category'),
                 goal: goalValue,
@@ -300,32 +292,76 @@
                 return;
             }
 
-            if (reviewedGoal.start_date > reviewedGoal.done_by_date) {
+            if (goalToSave.start_date > goalToSave.done_by_date) {
                 doneByDateInput.setCustomValidity('End date must be on or after the start date.');
                 doneByDateInput.reportValidity();
                 doneByDateInput.setCustomValidity('');
                 return;
             }
 
-            document.getElementById('review-name').textContent = reviewedGoal.goal_name;
-            document.getElementById('review-category').textContent = categoryLabels[reviewedGoal.category];
-            document.getElementById('review-goal').textContent =
-                `${reviewedGoal.goal} ${goalUnits[reviewedGoal.category].unit}`;
-            document.getElementById('review-start-date').textContent = reviewedGoal.start_date;
-            document.getElementById('review-done-by-date').textContent = reviewedGoal.done_by_date;
-            reviewHeading.textContent = editingGoalId === null ? 'Review your goal' : 'Review your changes';
-            confirmButton.textContent = editingGoalId === null ? 'Confirm and save' : 'Confirm changes';
-            form.hidden = true;
-            review.hidden = false;
             message.hidden = true;
-        });
-
-        document.getElementById('edit-goal').addEventListener('click', () => {
-            review.hidden = true;
-            form.hidden = false;
+            saveButton.disabled = true;
+            try {
+                const action = editingGoalId === null ? 'create_goal' : 'update_goal';
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action,
+                        ...(editingGoalId === null ? {} : { id: editingGoalId }),
+                        ...goalToSave
+                    })
+                });
+                const data = await readResponse(response);
+                addGoalToList(data.goal);
+                stopEditing();
+                if (action === 'create_goal') {
+                    cancelSavedGoal = data.goal;
+                    showMessage('Your goal has been saved.', true, true);
+                } else {
+                    showMessage('Your goal has been updated.', true);
+                }
+            } catch (error) {
+                showMessage(error.message || 'Unable to save your goal. Please try again.');
+            } finally {
+                saveButton.disabled = false;
+            }
         });
 
         cancelEditButton.addEventListener('click', stopEditing);
+
+        cancelSavedGoalButton.addEventListener('click', async () => {
+            if (!cancelSavedGoal) {
+                return;
+            }
+
+            const goal = cancelSavedGoal;
+            cancelSavedGoalButton.disabled = true;
+            try {
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete_goal', id: goal.id })
+                });
+                const data = await readResponse(response);
+                goalList.querySelector(`[data-goal-id="${data.id}"]`)?.remove();
+                savedGoals.delete(String(data.id));
+                emptyMessage.hidden = goalList.children.length !== 0;
+                stopEditing();
+                nameInput.value = goal.goal_name || '';
+                setGoalCategory(goal.category);
+                goalInput.value = goal.goal;
+                startDateInput.value = goal.start_date;
+                doneByDateInput.value = goal.done_by_date;
+                updateDateRangeConstraints();
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                showMessage('Goal canceled. Update the details and save again.', true);
+            } catch (error) {
+                showMessage(error.message || 'Unable to cancel the saved goal. Please try again.', false, true);
+            } finally {
+                cancelSavedGoalButton.disabled = false;
+            }
+        });
 
         goalList.addEventListener('click', async (event) => {
             const button = event.target.closest('button[data-goal-action]');
@@ -408,35 +444,6 @@
                 showMessage(error.message || 'Unable to delete this goal. Please try again.');
             } finally {
                 button.disabled = false;
-            }
-        });
-
-        confirmButton.addEventListener('click', async () => {
-            if (!reviewedGoal) {
-                showMessage('Review your goal before saving it.');
-                return;
-            }
-
-            confirmButton.disabled = true;
-            try {
-                const action = editingGoalId === null ? 'create_goal' : 'update_goal';
-                const response = await fetch('api.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action,
-                        ...(editingGoalId === null ? {} : { id: editingGoalId }),
-                        ...reviewedGoal
-                    })
-                });
-                const data = await readResponse(response);
-                addGoalToList(data.goal);
-                stopEditing();
-                showMessage(action === 'create_goal' ? 'Your goal has been verified and saved.' : 'Your goal has been updated.', true);
-            } catch (error) {
-                showMessage(error.message || 'Unable to save your goal. Please try again.');
-            } finally {
-                confirmButton.disabled = false;
             }
         });
 

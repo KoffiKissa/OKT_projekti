@@ -82,26 +82,45 @@ function goalEntryValue(string $category, string $measurement): ?float
     return (float) $measurement;
 }
 
+function elapsedGoalDays(string $startDate, string $doneByDate): int
+{
+    $start = new DateTimeImmutable($startDate);
+    $today = new DateTimeImmutable('today');
+    if ($start > $today) {
+        return 0;
+    }
+
+    $end = new DateTimeImmutable($doneByDate);
+    if ($end > $today) {
+        $end = $today;
+    }
+
+    return $start->diff($end)->days + 1;
+}
+
 function averageStepsForGoal(PDO $pdo, int $userId, string $startDate, string $doneByDate): float
 {
+    $throughDate = min($doneByDate, (new DateTimeImmutable('today'))->format('Y-m-d'));
+    $days = elapsedGoalDays($startDate, $doneByDate);
+    if ($days === 0) {
+        return 0.0;
+    }
+
     $statement = $pdo->prepare(
         'SELECT COALESCE(SUM(CAST(measurement AS DECIMAL(10,2))), 0)
          FROM health_markers
          WHERE user_id = :user_id AND category = :category
-           AND date >= :start_date AND date <= :done_by_date'
+           AND date >= :start_date AND date <= :through_date'
     );
     $statement->execute([
         'user_id' => $userId,
         'category' => 'steps',
         'start_date' => $startDate,
-        'done_by_date' => $doneByDate,
+        'through_date' => $throughDate,
     ]);
     $total = (float) $statement->fetchColumn();
-    $periodStart = new DateTimeImmutable($startDate);
-    $periodEnd = new DateTimeImmutable($doneByDate);
-    $periodDays = $periodStart->diff($periodEnd)->days + 1;
 
-    return $total / $periodDays;
+    return $total / $days;
 }
 
 function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category): void
@@ -117,12 +136,14 @@ function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category):
         'category' => $category,
     ]);
 
-    $entriesStatement = $pdo->prepare(
-        'SELECT measurement
-         FROM health_markers
-         WHERE user_id = :user_id AND category = :category
-           AND date >= :start_date AND date <= :done_by_date'
-    );
+    $entriesQuery = 'SELECT measurement
+                     FROM health_markers
+                     WHERE user_id = :user_id AND category = :category
+                       AND date >= :start_date AND date <= :done_by_date';
+    if ($category === 'steps') {
+        $entriesQuery .= ' AND date <= :through_date';
+    }
+    $entriesStatement = $pdo->prepare($entriesQuery);
     $completeStatement = $pdo->prepare(
         'UPDATE goals SET goal_done = 1
          WHERE id = :id AND user_id = :user_id
@@ -130,12 +151,19 @@ function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category):
     );
 
     foreach ($goalsStatement->fetchAll() as $goal) {
-        $entriesStatement->execute([
+        $entryParameters = [
             'user_id' => $userId,
             'category' => $category,
             'start_date' => $goal['start_date'],
             'done_by_date' => $goal['done_by_date'],
-        ]);
+        ];
+        if ($category === 'steps') {
+            $entryParameters['through_date'] = min(
+                (string) $goal['done_by_date'],
+                (new DateTimeImmutable('today'))->format('Y-m-d')
+            );
+        }
+        $entriesStatement->execute($entryParameters);
 
         $total = 0.0;
         foreach ($entriesStatement->fetchAll() as $entry) {
@@ -146,10 +174,8 @@ function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category):
         }
 
         if ($category === 'steps') {
-            $periodStart = new DateTimeImmutable((string) $goal['start_date']);
-            $periodEnd = new DateTimeImmutable((string) $goal['done_by_date']);
-            $periodDays = $periodStart->diff($periodEnd)->days + 1;
-            $reached = ($total / $periodDays) >= (float) $goal['goal'];
+            $periodDays = elapsedGoalDays((string) $goal['start_date'], (string) $goal['done_by_date']);
+            $reached = $periodDays > 0 && ($total / $periodDays) >= (float) $goal['goal'];
         } else {
             $reached = $total >= (float) $goal['goal'];
         }
@@ -240,7 +266,7 @@ try {
     $username = $credentials['username'] ?? null;
     $password = $credentials['password'] ?? null;
 
-    if (!is_string($action) || !in_array($action, ['login', 'register', 'logout', 'create_goal', 'update_goal', 'delete_goal', 'mark_goal_done', 'mark_goal_not_done', 'create_entry'], true)) {
+    if (!is_string($action) || !in_array($action, ['login', 'register', 'logout', 'create_goal', 'update_goal', 'delete_goal', 'mark_goal_done', 'mark_goal_not_done', 'create_entry', 'update_entry', 'delete_entry'], true)) {
         respond(400, ['error' => 'Invalid account action.']);
     }
 
@@ -261,9 +287,39 @@ try {
         respond(200, ['logged_out' => true]);
     }
 
-    if ($action === 'create_entry') {
+    if ($action === 'delete_entry') {
         if (!isset($_SESSION['user_id'])) {
-            respond(401, ['error' => 'Please sign in before adding an entry.']);
+            respond(401, ['error' => 'Please sign in before removing an entry.']);
+        }
+
+        $entryId = $credentials['id'] ?? null;
+        if (!is_int($entryId) || $entryId < 1) {
+            respond(400, ['error' => 'A valid entry ID is required.']);
+        }
+
+        $pdo = connectToDatabase();
+        $statement = $pdo->prepare(
+            'DELETE FROM health_markers WHERE id = :id AND user_id = :user_id'
+        );
+        $statement->execute([
+            'id' => $entryId,
+            'user_id' => (int) $_SESSION['user_id'],
+        ]);
+        if ($statement->rowCount() === 0) {
+            respond(404, ['error' => 'Entry not found.']);
+        }
+
+        respond(200, ['deleted' => true, 'id' => $entryId]);
+    }
+
+    if ($action === 'create_entry' || $action === 'update_entry') {
+        if (!isset($_SESSION['user_id'])) {
+            respond(401, ['error' => 'Please sign in before changing an entry.']);
+        }
+
+        $entryId = $credentials['id'] ?? null;
+        if ($action === 'update_entry' && (!is_int($entryId) || $entryId < 1)) {
+            respond(400, ['error' => 'A valid entry ID is required.']);
         }
 
         $category = $credentials['category'] ?? null;
@@ -323,25 +379,58 @@ try {
         }
 
         $pdo = connectToDatabase();
-        $statement = $pdo->prepare(
-            'INSERT INTO health_markers (user_id, category, measurement, date)
-             VALUES (:user_id, :category, :measurement, :date)'
-        );
-        $statement->execute([
-            'user_id' => (int) $_SESSION['user_id'],
-            'category' => $category,
-            'measurement' => $measurement,
-            'date' => $entryDate->format('Y-m-d'),
-        ]);
-        $entryId = (int) $pdo->lastInsertId();
-        completeGoalsReachedByEntries($pdo, (int) $_SESSION['user_id'], $category);
+        $userId = (int) $_SESSION['user_id'];
+        $savedDate = $entryDate->format('Y-m-d');
+        if ($action === 'create_entry') {
+            $statement = $pdo->prepare(
+                'INSERT INTO health_markers (user_id, category, measurement, date)
+                 VALUES (:user_id, :category, :measurement, :date)'
+            );
+            $statement->execute([
+                'user_id' => $userId,
+                'category' => $category,
+                'measurement' => $measurement,
+                'date' => $savedDate,
+            ]);
+            $entryId = (int) $pdo->lastInsertId();
+            $previousCategory = null;
+        } else {
+            $existingEntryStatement = $pdo->prepare(
+                'SELECT category FROM health_markers WHERE id = :id AND user_id = :user_id'
+            );
+            $existingEntryStatement->execute([
+                'id' => $entryId,
+                'user_id' => $userId,
+            ]);
+            $previousCategory = $existingEntryStatement->fetchColumn();
+            if ($previousCategory === false) {
+                respond(404, ['error' => 'Entry not found.']);
+            }
 
-        respond(201, [
+            $statement = $pdo->prepare(
+                'UPDATE health_markers
+                 SET category = :category, measurement = :measurement, date = :date
+                 WHERE id = :id AND user_id = :user_id'
+            );
+            $statement->execute([
+                'category' => $category,
+                'measurement' => $measurement,
+                'date' => $savedDate,
+                'id' => $entryId,
+                'user_id' => $userId,
+            ]);
+        }
+
+        foreach (array_unique(array_filter([$previousCategory, $category])) as $affectedCategory) {
+            completeGoalsReachedByEntries($pdo, $userId, $affectedCategory);
+        }
+
+        respond($action === 'create_entry' ? 201 : 200, [
             'entry' => [
                 'id' => $entryId,
                 'category' => $category,
                 'measurement' => $measurement,
-                'date' => $entryDate->format('Y-m-d'),
+                'date' => $savedDate,
             ],
         ]);
     }

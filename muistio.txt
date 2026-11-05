@@ -21,5 +21,6 @@ garphify
     d.	Saavutukset
     e. AI-viestit
 
-
-Muista ettei tietokantaan saa laittaa tyhjää tavoitetta
+Ehottomasti ne include headerit eli navit ja footerit!! on hirvee setti nyt
+Google remote desktop (chrome) D:
+ Tailwind Components

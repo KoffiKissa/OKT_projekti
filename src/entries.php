@@ -12,8 +12,8 @@
         <div class="mb-[26px] inline-flex items-center gap-[10px] text-sm font-bold tracking-[0.06em] text-[#193d2d]"><span class="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-[#c9e6c6] text-[21px] text-[#193d2d]" aria-hidden="true">+</span> WELLBEING</div>
         <div class="flex items-start justify-between gap-4">
             <div>
-                <h1 class="m-0 text-[30px] font-bold tracking-[-0.04em]">New entry</h1>
-                <p class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Record a health measurement and check it before saving.</p>
+                <h1 id="entry-form-heading" class="m-0 text-[30px] font-bold tracking-[-0.04em]">New entry</h1>
+                <p id="entry-form-intro" class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Enter a health measurement and save it.</p>
             </div>
             <nav class="flex flex-wrap gap-4">
                 <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="dashboard.php">Dashboard</a>
@@ -21,7 +21,9 @@
             </nav>
         </div>
 
-        <div id="entry-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="status" hidden></div>
+        <div id="entry-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="status" hidden>
+            <button id="undo-entry-button" class="ml-3 cursor-pointer rounded-[7px] border border-[#dce2da] bg-white px-3 py-1 font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] disabled:cursor-wait disabled:opacity-70" type="button" hidden>Undo changes</button>
+        </div>
 
         <form id="entry-form" class="grid grid-cols-2 gap-x-5 max-[700px]:grid-cols-1">
             <div class="mb-[18px]">
@@ -60,19 +62,9 @@
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="date">Measurement date</label>
                 <input id="date" name="date" type="date" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
-            <button type="submit" class="col-span-2 mt-[5px] min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[700px]:col-span-1">Review entry</button>
+            <button id="entry-submit-button" type="submit" class="col-span-2 mt-[5px] min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[700px]:col-span-1">Save entry</button>
+            <button id="cancel-edit-button" type="button" class="col-span-2 min-h-12 w-full cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-sm font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] max-[700px]:col-span-1" hidden>Cancel editing</button>
         </form>
-
-        <section id="entry-review" class="mb-[18px] rounded-[10px] border border-[#cce5d1] bg-[#f1faf3] p-4" aria-labelledby="review-heading" hidden>
-            <h2 id="review-heading" class="mb-3 mt-0 text-[17px] font-bold text-[#245c36]">Review your entry</h2>
-            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Health parameter:</strong> <span id="review-category"></span></p>
-            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Measurement:</strong> <span id="review-measurement"></span></p>
-            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Date:</strong> <span id="review-date"></span></p>
-            <div class="mt-4 grid grid-cols-2 gap-[10px] max-[480px]:grid-cols-1">
-                <button id="edit-entry" class="mt-0 min-h-12 w-auto cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-sm font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70" type="button">Make changes</button>
-                <button id="confirm-entry" type="button" class="mt-0 min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Confirm and save</button>
-            </div>
-        </section>
 
         <section aria-labelledby="entry-history-heading">
             <h2 id="entry-history-heading" class="mb-[14px] mt-[26px] text-lg font-bold tracking-[-0.02em]">Your recent entries</h2>
@@ -86,8 +78,8 @@
         const page = document.getElementById('entries-page');
         const loadingMessage = document.getElementById('loading-message');
         const message = document.getElementById('entry-message');
+        const undoButton = document.getElementById('undo-entry-button');
         const form = document.getElementById('entry-form');
-        const review = document.getElementById('entry-review');
         const categoryInput = document.getElementById('category');
         const measurementInput = document.getElementById('measurement');
         const measurementLabel = document.getElementById('measurement-label');
@@ -98,7 +90,10 @@
         const diastolicInput = document.getElementById('diastolic');
         const entryList = document.getElementById('entry-list');
         const emptyMessage = document.getElementById('entry-empty');
-        const confirmButton = document.getElementById('confirm-entry');
+        const submitButton = document.getElementById('entry-submit-button');
+        const cancelEditButton = document.getElementById('cancel-edit-button');
+        const formHeading = document.getElementById('entry-form-heading');
+        const formIntro = document.getElementById('entry-form-intro');
         const categoryLabels = {
             weight: 'Weight (kg)',
             sleep: 'Sleep (h)',
@@ -128,7 +123,10 @@
                 hint: 'Enter a whole number between 0 and 200,000 steps.'
             }
         };
-        let reviewedEntry = null;
+        let entryToSave = null;
+        let editingEntryId = null;
+        let undoEntry = null;
+        let entries = [];
 
         async function readResponse(response) {
             const data = await response.json();
@@ -141,8 +139,12 @@
             return data;
         }
 
-        function showMessage(text, success = false) {
+        function showMessage(text, success = false, showUndo = false) {
             message.textContent = text;
+            undoButton.hidden = !showUndo;
+            if (showUndo) {
+                message.append(undoButton);
+            }
             message.classList.toggle('border-[#cce5d1]', success);
             message.classList.toggle('bg-[#f1faf3]', success);
             message.classList.toggle('text-[#245c36]', success);
@@ -162,7 +164,11 @@
 
         function addEntryToList(entry) {
             const item = document.createElement('li');
-            item.className = 'rounded-[10px] border border-[#e6e9e1] bg-[#fbfcfa] p-[14px]';
+            item.className = Number(entry.id) === editingEntryId
+                ? 'flex items-start justify-between gap-3 rounded-[10px] border border-[#3a7752] bg-[#f1faf3] p-[14px] ring-2 ring-[#9fcba9]'
+                : 'flex items-start justify-between gap-3 rounded-[10px] border border-[#e6e9e1] bg-[#fbfcfa] p-[14px]';
+            const details = document.createElement('div');
+            details.className = 'min-w-0';
             const title = document.createElement('strong');
             title.className = 'mb-[5px] block text-sm font-bold text-[#26372d]';
             title.textContent = categoryLabels[entry.category] || entry.category;
@@ -173,15 +179,112 @@
             date.className = 'mt-[5px] block text-[13px] leading-[1.5] text-[#68756c]';
             date.dateTime = entry.date;
             date.textContent = `Measured: ${entry.date}`;
-            item.append(title, value, date);
-            entryList.prepend(item);
-            emptyMessage.hidden = true;
+            const editButton = document.createElement('button');
+            editButton.className = 'min-h-[38px] shrink-0 cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-[13px] font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px]';
+            editButton.type = 'button';
+            editButton.textContent = 'Edit entry';
+            editButton.addEventListener('click', () => startEditingEntry(entry));
+            details.append(title, value, date);
+            item.append(details, editButton);
+            return item;
         }
 
         function renderEntries(entries) {
             entryList.replaceChildren();
-            entries.forEach(addEntryToList);
+            [...entries]
+                .sort((left, right) => right.date.localeCompare(left.date) || Number(right.id) - Number(left.id))
+                .forEach((entry) => entryList.append(addEntryToList(entry)));
             emptyMessage.hidden = entries.length !== 0;
+        }
+
+        function resetEntryForm(preserveUndo = false) {
+            const wasEditing = editingEntryId !== null;
+            form.reset();
+            categoryInput.dispatchEvent(new Event('change'));
+            document.getElementById('date').value = localToday;
+            editingEntryId = null;
+            entryToSave = null;
+            formHeading.textContent = 'New entry';
+            formIntro.textContent = 'Enter a health measurement and save it.';
+            submitButton.textContent = 'Save entry';
+            cancelEditButton.hidden = true;
+            form.hidden = false;
+            if (!preserveUndo) {
+                undoEntry = null;
+                undoButton.hidden = true;
+            }
+            if (wasEditing) {
+                renderEntries(entries);
+            }
+        }
+
+        function startEditingEntry(entry) {
+            editingEntryId = Number(entry.id);
+            entryToSave = null;
+            undoEntry = null;
+            undoButton.hidden = true;
+            renderEntries(entries);
+            categoryInput.value = entry.category;
+            categoryInput.dispatchEvent(new Event('change'));
+            if (entry.category === 'blood_pressure') {
+                const [systolic, diastolic] = entry.measurement.split('/');
+                systolicInput.value = systolic;
+                diastolicInput.value = diastolic;
+            } else {
+                measurementInput.value = entry.measurement;
+            }
+            document.getElementById('date').value = entry.date;
+            formHeading.textContent = 'Edit entry';
+            formIntro.textContent = 'Correct the measurement or date, then save your changes.';
+            submitButton.textContent = 'Confirm changes';
+            cancelEditButton.hidden = false;
+            form.hidden = false;
+            message.hidden = true;
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function saveEntry(isEditing) {
+            const entryId = editingEntryId;
+            const previousEntry = isEditing
+                ? entries.find((entry) => Number(entry.id) === entryId)
+                : null;
+            if (isEditing && !previousEntry) {
+                showMessage('The entry could not be found. Please reload your entries and try again.');
+                return;
+            }
+
+            submitButton.disabled = true;
+            try {
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: isEditing ? 'update_entry' : 'create_entry',
+                        ...(isEditing ? { id: entryId } : {}),
+                        ...entryToSave
+                    })
+                });
+                const data = await readResponse(response);
+                if (isEditing) {
+                    entries = entries.map((entry) => Number(entry.id) === entryId ? data.entry : entry);
+                    undoEntry = { type: 'restore', entry: { ...previousEntry } };
+                } else {
+                    entries.push(data.entry);
+                    undoEntry = { type: 'delete', entry: data.entry };
+                }
+                resetEntryForm(true);
+                renderEntries(entries);
+                undoButton.textContent = isEditing ? 'Undo changes' : 'Undo entry';
+                showMessage(
+                    isEditing ? 'Your changes have been saved.' : 'Your entry has been saved.',
+                    true,
+                    true
+                );
+            } catch (error) {
+                showMessage(error.message || 'Unable to save the entry. Please try again.');
+            } finally {
+                submitButton.disabled = false;
+            }
         }
 
         categoryInput.addEventListener('change', () => {
@@ -215,7 +318,7 @@
             diastolicInput.value = '';
         });
 
-        form.addEventListener('submit', (event) => {
+        form.addEventListener('submit', async (event) => {
             event.preventDefault();
             if (!form.reportValidity()) {
                 return;
@@ -223,80 +326,91 @@
 
             const category = categoryInput.value;
             const values = new FormData(form);
-            reviewedEntry = {
+            entryToSave = {
                 category,
                 date: values.get('date')
             };
 
             if (category === 'blood_pressure') {
-                reviewedEntry.systolic = Number(values.get('systolic'));
-                reviewedEntry.diastolic = Number(values.get('diastolic'));
+                entryToSave.systolic = Number(values.get('systolic'));
+                entryToSave.diastolic = Number(values.get('diastolic'));
                 if (
-                    reviewedEntry.systolic <= reviewedEntry.diastolic
-                    || reviewedEntry.systolic < 50
-                    || reviewedEntry.systolic > 300
-                    || reviewedEntry.diastolic < 30
-                    || reviewedEntry.diastolic > 200
+                    entryToSave.systolic <= entryToSave.diastolic
+                    || entryToSave.systolic < 50
+                    || entryToSave.systolic > 300
+                    || entryToSave.diastolic < 30
+                    || entryToSave.diastolic > 200
                 ) {
                     showMessage('Check the values: systolic must be higher than diastolic (50–300 / 30–200 mmHg).');
                     return;
                 }
             } else {
-                reviewedEntry.measurement = Number(values.get('measurement'));
+                entryToSave.measurement = Number(values.get('measurement'));
                 const settings = measurementSettings[category];
                 if (
-                    !Number.isFinite(reviewedEntry.measurement)
-                    || reviewedEntry.measurement < Number(settings.min)
-                    || reviewedEntry.measurement > Number(settings.max)
-                    || (category === 'steps' && !Number.isInteger(reviewedEntry.measurement))
+                    !Number.isFinite(entryToSave.measurement)
+                    || entryToSave.measurement < Number(settings.min)
+                    || entryToSave.measurement > Number(settings.max)
+                    || (category === 'steps' && !Number.isInteger(entryToSave.measurement))
                 ) {
                     showMessage('The measurement is outside the valid range for this parameter.');
                     return;
                 }
             }
 
-            document.getElementById('review-category').textContent = categoryLabels[category];
-            document.getElementById('review-measurement').textContent = category === 'blood_pressure'
-                ? `${reviewedEntry.systolic}/${reviewedEntry.diastolic} mmHg`
-                : formatMeasurement({ category, measurement: reviewedEntry.measurement });
-            document.getElementById('review-date').textContent = reviewedEntry.date;
-            form.hidden = true;
-            review.hidden = false;
             message.hidden = true;
+            await saveEntry(editingEntryId !== null);
         });
 
-        document.getElementById('edit-entry').addEventListener('click', () => {
-            review.hidden = true;
-            form.hidden = false;
-        });
-
-        confirmButton.addEventListener('click', async () => {
-            if (!reviewedEntry) {
-                showMessage('Review the measurement before saving it.');
+        undoButton.addEventListener('click', async () => {
+            if (!undoEntry) {
                 return;
             }
 
-            confirmButton.disabled = true;
+            const undoAction = undoEntry;
+            const entryToUndo = undoAction.entry;
+            undoButton.disabled = true;
             try {
                 const response = await fetch('api.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'create_entry', ...reviewedEntry })
+                    body: JSON.stringify(undoAction.type === 'delete'
+                        ? { action: 'delete_entry', id: Number(entryToUndo.id) }
+                        : entryToUndo.category === 'blood_pressure'
+                            ? {
+                                action: 'update_entry',
+                                id: Number(entryToUndo.id),
+                                category: entryToUndo.category,
+                                systolic: Number(entryToUndo.measurement.split('/')[0]),
+                                diastolic: Number(entryToUndo.measurement.split('/')[1]),
+                                date: entryToUndo.date
+                            }
+                            : {
+                                action: 'update_entry',
+                                id: Number(entryToUndo.id),
+                                category: entryToUndo.category,
+                                measurement: Number(entryToUndo.measurement),
+                                date: entryToUndo.date
+                            })
                 });
                 const data = await readResponse(response);
-                addEntryToList(data.entry);
-                form.reset();
-                categoryInput.dispatchEvent(new Event('change'));
-                reviewedEntry = null;
-                review.hidden = true;
-                form.hidden = false;
-                showMessage('Your measurement has been verified and saved.', true);
+                if (undoAction.type === 'delete') {
+                    entries = entries.filter((entry) => Number(entry.id) !== Number(data.id));
+                } else {
+                    entries = entries.map((entry) => Number(entry.id) === Number(data.entry.id) ? data.entry : entry);
+                }
+                undoEntry = null;
+                undoButton.hidden = true;
+                renderEntries(entries);
+                showMessage(undoAction.type === 'delete' ? 'Your entry has been removed.' : 'Your changes have been reverted.', true);
             } catch (error) {
-                showMessage(error.message || 'Unable to save the entry. Please try again.');
+                showMessage(error.message || 'Unable to revert the changes. Please try again.', false, true);
             } finally {
-                confirmButton.disabled = false;
+                undoButton.disabled = false;
             }
         });
+
+        cancelEditButton.addEventListener('click', resetEntryForm);
 
         const today = new Date();
         const localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
@@ -308,7 +422,8 @@
         fetch('api.php?resource=health_markers')
             .then(readResponse)
             .then((data) => {
-                renderEntries(data.entries);
+                entries = data.entries;
+                renderEntries(entries);
                 loadingMessage.hidden = true;
                 page.hidden = false;
             })
