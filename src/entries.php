@@ -39,7 +39,7 @@
                 <span id="measurement-hint" class="mt-[6px] block text-[11px] leading-[1.4] text-[#7a857d]">Choose a parameter to see the expected unit and range.</span>
             </div>
 
-            <div id="blood-pressure-fields" class="grid grid-cols-2 gap-[14px] max-[480px]:grid-cols-1 max-[480px]:gap-0" hidden>
+            <div id="blood-pressure-fields" class="grid-cols-2 gap-[14px] max-[480px]:grid-cols-1 max-[480px]:gap-0" hidden>
                 <div class="mb-2">
                     <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="systolic">Systolic (mmHg)</label>
                     <input id="systolic" name="systolic" type="number" min="50" max="300"
@@ -187,6 +187,7 @@
             const settings = measurementSettings[category];
 
             singleField.hidden = isBloodPressure;
+            bloodPressureFields.classList.toggle('grid', isBloodPressure);
             bloodPressureFields.hidden = !isBloodPressure;
             measurementInput.disabled = !settings;
             measurementInput.required = !isBloodPressure && Boolean(settings);
@@ -195,12 +196,14 @@
 
             if (settings) {
                 measurementLabel.textContent = settings.label;
+                measurementInput.placeholder = 'Enter a measurement';
                 measurementInput.min = settings.min;
                 measurementInput.max = settings.max;
                 measurementInput.step = settings.step;
                 measurementHint.textContent = settings.hint;
             } else {
                 measurementLabel.textContent = 'Measurement';
+                measurementInput.placeholder = 'Choose a parameter first';
                 measurementHint.textContent = 'Choose a parameter to see the expected unit and range.';
             }
 

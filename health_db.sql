@@ -57,17 +57,19 @@ CREATE TABLE `achievements_user` (
 CREATE TABLE `goals` (
   `id` int NOT NULL,
   `user_id` int DEFAULT NULL,
+  `goal_name` varchar(100) NOT NULL,
   `category` enum('weight','sleep','steps','blood_pressure') DEFAULT NULL,
   `goal` decimal(10,2) NOT NULL,
-  `date` date NOT NULL
+  `start_date` date NOT NULL,
+  `done_by_date` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Vedos taulusta `goals`
 --
 
-INSERT INTO `goals` (`id`, `user_id`, `category`, `goal`, `date`) VALUES
-(4, 3, 'steps', 7500.00, '2026-11-03');
+INSERT INTO `goals` (`id`, `user_id`, `goal_name`, `category`, `goal`, `start_date`, `done_by_date`) VALUES
+(4, 3, 'Daily step target', 'steps', 7500.00, '2026-11-03', '2026-12-03');
 
 -- --------------------------------------------------------
 

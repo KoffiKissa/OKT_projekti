@@ -19,6 +19,7 @@
             <p id="user-details" class="mb-0 mt-[5px] text-sm text-[#516c58]"></p>
             <a class="mt-3 inline-block text-sm font-bold text-[#28603e] no-underline hover:underline" href="goals.php">View and add health goals</a>
             <a class="mt-3 inline-block text-sm font-bold text-[#28603e] no-underline hover:underline" href="entries.php">Add a new health entry</a>
+            <button id="logout-button" class="mt-4 min-h-[38px] w-full cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-[13px] font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70" type="button">Log out</button>
         </div>
 
         <form id="login-form" action="api.php" method="post">
@@ -75,6 +76,7 @@
         const message = document.getElementById('message');
         const welcome = document.getElementById('welcome');
         const userDetails = document.getElementById('user-details');
+        const logoutButton = document.getElementById('logout-button');
         const submitButton = document.getElementById('submit-button');
         const registerForm = document.getElementById('register-form');
         const registerButton = document.getElementById('register-button');
@@ -161,6 +163,26 @@
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             await submitAccountForm(registerForm, 'register', registerButton);
+        });
+
+        logoutButton.addEventListener('click', async () => {
+            logoutButton.disabled = true;
+            message.hidden = true;
+            try {
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'logout' })
+                });
+                await readResponse(response);
+                welcome.hidden = true;
+                userDetails.textContent = '';
+                setMode('login');
+            } catch (error) {
+                showError(error.message || 'Unable to log out. Please try again.');
+            } finally {
+                logoutButton.disabled = false;
+            }
         });
 
         fetch('api.php')

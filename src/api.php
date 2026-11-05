@@ -87,10 +87,10 @@ try {
 
         if (($_GET['resource'] ?? '') === 'goals') {
             $statement = $pdo->prepare(
-                'SELECT id, category, goal, date
+                'SELECT id, goal_name, category, goal, start_date, done_by_date
                  FROM goals
                  WHERE user_id = :user_id
-                 ORDER BY date ASC, id DESC'
+                 ORDER BY start_date ASC, id DESC'
             );
             $statement->execute(['user_id' => (int) $user['user_id']]);
             $goals = $statement->fetchAll();
@@ -134,8 +134,25 @@ try {
     $username = $credentials['username'] ?? null;
     $password = $credentials['password'] ?? null;
 
-    if (!is_string($action) || !in_array($action, ['login', 'register', 'create_goal', 'update_goal', 'delete_goal', 'create_entry'], true)) {
+    if (!is_string($action) || !in_array($action, ['login', 'register', 'logout', 'create_goal', 'update_goal', 'delete_goal', 'create_entry'], true)) {
         respond(400, ['error' => 'Invalid account action.']);
+    }
+
+    if ($action === 'logout') {
+        $_SESSION = [];
+        if (ini_get('session.use_cookies')) {
+            $cookie = session_get_cookie_params();
+            setcookie(session_name(), '', [
+                'expires' => time() - 42000,
+                'path' => $cookie['path'],
+                'domain' => $cookie['domain'],
+                'secure' => $cookie['secure'],
+                'httponly' => $cookie['httponly'],
+                'samesite' => $cookie['samesite'],
+            ]);
+        }
+        session_destroy();
+        respond(200, ['logged_out' => true]);
     }
 
     if ($action === 'create_entry') {
@@ -144,7 +161,8 @@ try {
         }
 
         $category = $credentials['category'] ?? null;
-        $date = $credentials['date'] ?? null;
+        $startDate = $credentials['start_date'] ?? null;
+        $doneByDate = $credentials['done_by_date'] ?? null;
         $categories = ['weight', 'sleep', 'steps', 'blood_pressure'];
         if (!is_string($category) || !in_array($category, $categories, true)) {
             respond(400, ['error' => 'Choose a valid health parameter.']);
@@ -251,9 +269,15 @@ try {
         }
 
         $category = $credentials['category'] ?? null;
+        $goalName = $credentials['goal_name'] ?? null;
         $goal = $credentials['goal'] ?? null;
         $date = $credentials['date'] ?? null;
         $categories = ['weight', 'sleep', 'steps', 'blood_pressure'];
+
+        if (!is_string($goalName) || trim($goalName) === '' || characterLength(trim($goalName)) > 100) {
+            respond(400, ['error' => 'Enter a goal name of 100 characters or fewer.']);
+        }
+        $goalName = trim($goalName);
 
         if (!is_string($category) || !in_array($category, $categories, true)) {
             respond(400, ['error' => 'Choose a valid health parameter.']);
@@ -278,14 +302,28 @@ try {
         }
         $goal = number_format($goal, 2, '.', '');
 
-        $targetDate = is_string($date) ? DateTimeImmutable::createFromFormat('!Y-m-d', $date) : false;
-        $dateErrors = DateTimeImmutable::getLastErrors();
+        $startDateValue = is_string($startDate) ? DateTimeImmutable::createFromFormat('!Y-m-d', $startDate) : false;
+        $startDateErrors = DateTimeImmutable::getLastErrors();
         if (
-            $targetDate === false
-            || $targetDate->format('Y-m-d') !== $date
-            || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+            $startDateValue === false
+            || $startDateValue->format('Y-m-d') !== $startDate
+            || ($startDateErrors !== false && ($startDateErrors['warning_count'] > 0 || $startDateErrors['error_count'] > 0))
         ) {
-            respond(400, ['error' => 'Choose a valid target date.']);
+            respond(400, ['error' => 'Choose a valid start date.']);
+        }
+
+        $doneByDateValue = is_string($doneByDate) ? DateTimeImmutable::createFromFormat('!Y-m-d', $doneByDate) : false;
+        $doneByDateErrors = DateTimeImmutable::getLastErrors();
+        if (
+            $doneByDateValue === false
+            || $doneByDateValue->format('Y-m-d') !== $doneByDate
+            || ($doneByDateErrors !== false && ($doneByDateErrors['warning_count'] > 0 || $doneByDateErrors['error_count'] > 0))
+        ) {
+            respond(400, ['error' => 'Choose a valid end date.']);
+        }
+
+        if ($doneByDateValue < $startDateValue) {
+            respond(400, ['error' => 'End date must be on or after the start date.']);
         }
     } elseif ($action === 'register') {
         $name = $credentials['name'] ?? null;
@@ -330,13 +368,16 @@ try {
         if ($action === 'update_goal') {
             $statement = $pdo->prepare(
                 'UPDATE goals
-                 SET category = :category, goal = :goal, date = :date
+                 SET goal_name = :goal_name, category = :category, goal = :goal,
+                     start_date = :start_date, done_by_date = :done_by_date
                  WHERE id = :id AND user_id = :user_id'
             );
             $statement->execute([
+                'goal_name' => $goalName,
                 'category' => $category,
                 'goal' => $goal,
-                'date' => $targetDate->format('Y-m-d'),
+                'start_date' => $startDateValue->format('Y-m-d'),
+                'done_by_date' => $doneByDateValue->format('Y-m-d'),
                 'id' => $goalId,
                 'user_id' => (int) $_SESSION['user_id'],
             ]);
@@ -351,14 +392,16 @@ try {
             }
         } else {
             $statement = $pdo->prepare(
-                'INSERT INTO goals (user_id, category, goal, date)
-                 VALUES (:user_id, :category, :goal, :date)'
+                'INSERT INTO goals (user_id, goal_name, category, goal, start_date, done_by_date)
+                 VALUES (:user_id, :goal_name, :category, :goal, :start_date, :done_by_date)'
             );
             $statement->execute([
                 'user_id' => (int) $_SESSION['user_id'],
+                'goal_name' => $goalName,
                 'category' => $category,
                 'goal' => $goal,
-                'date' => $targetDate->format('Y-m-d'),
+                'start_date' => $startDateValue->format('Y-m-d'),
+                'done_by_date' => $doneByDateValue->format('Y-m-d'),
             ]);
             $goalId = (int) $pdo->lastInsertId();
         }
@@ -366,9 +409,11 @@ try {
         respond($action === 'create_goal' ? 201 : 200, [
             'goal' => [
                 'id' => $goalId,
+                'goal_name' => $goalName,
                 'category' => $category,
                 'goal' => (float) $goal,
-                'date' => $targetDate->format('Y-m-d'),
+                'start_date' => $startDateValue->format('Y-m-d'),
+                'done_by_date' => $doneByDateValue->format('Y-m-d'),
             ],
         ]);
     }

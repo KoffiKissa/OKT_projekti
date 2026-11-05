@@ -22,6 +22,11 @@
 
         <form id="goal-form">
             <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="goal-name">Goal name</label>
+                <input id="goal-name" name="goal_name" type="text" maxlength="100" required placeholder="e.g. Run regularly"
+                       class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
+            </div>
+            <div class="mb-[18px]">
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="category">Health parameter</label>
                 <select id="category" name="category" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
                     <option value="">Choose a parameter</option>
@@ -38,8 +43,12 @@
                 <span id="goal-hint" class="mt-[6px] block text-[11px] leading-[1.4] text-[#7a857d]">Choose a health parameter to see its unit.</span>
             </div>
             <div class="mb-[18px]">
-                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="date">Target date</label>
-                <input id="date" name="date" type="date" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="start-date">Start date</label>
+                <input id="start-date" name="start_date" type="date" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
+            </div>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="done-by-date">End date</label>
+                <input id="done-by-date" name="done_by_date" type="date" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
             <div class="mt-3 flex gap-[9px] max-[480px]:flex-col">
                 <button id="review-goal-button" type="submit" class="mt-0 min-h-[38px] w-auto flex-1 cursor-pointer rounded-[9px] border-0 bg-[#28603e] px-[13px] py-2 text-[13px] font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70 max-[480px]:w-full">Review goal</button>
@@ -49,9 +58,11 @@
 
         <section id="goal-review" class="mb-[18px] rounded-[10px] border border-[#cce5d1] bg-[#f1faf3] p-4" aria-labelledby="review-heading" hidden>
             <h2 id="review-heading" class="mb-3 mt-0 text-[17px] font-bold text-[#245c36]">Review your goal</h2>
+            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Name:</strong> <span id="review-name"></span></p>
             <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Health parameter:</strong> <span id="review-category"></span></p>
             <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Goal:</strong> <span id="review-goal"></span></p>
-            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Target date:</strong> <span id="review-date"></span></p>
+            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>Start date:</strong> <span id="review-start-date"></span></p>
+            <p class="mt-[7px] text-sm leading-[1.5] text-[#516c58]"><strong>End date:</strong> <span id="review-done-by-date"></span></p>
             <div class="mt-4 grid grid-cols-2 gap-[10px] max-[480px]:grid-cols-1">
                 <button id="edit-goal" class="mt-0 min-h-12 w-auto cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-sm font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70" type="button">Make changes</button>
                 <button id="confirm-goal" type="button" class="mt-0 min-h-12 w-full cursor-pointer rounded-[9px] border-0 bg-[#28603e] text-sm font-bold text-white hover:bg-[#1d4d31] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px] disabled:cursor-wait disabled:opacity-70">Confirm and save</button>
@@ -76,6 +87,9 @@
         const emptyMessage = document.getElementById('goal-empty');
         const confirmButton = document.getElementById('confirm-goal');
         const categoryInput = document.getElementById('category');
+        const nameInput = document.getElementById('goal-name');
+        const startDateInput = document.getElementById('start-date');
+        const doneByDateInput = document.getElementById('done-by-date');
         const goalInput = document.getElementById('goal');
         const goalUnit = document.getElementById('goal-unit');
         const goalHint = document.getElementById('goal-hint');
@@ -128,14 +142,18 @@
 
             const title = document.createElement('strong');
             title.className = 'mb-[5px] block text-sm font-bold text-[#26372d]';
-            title.textContent = categoryLabels[goal.category] || goal.category;
+            title.textContent = goal.goal_name || categoryLabels[goal.category] || goal.category;
             const description = document.createElement('p');
             description.className = 'm-0 text-[13px] leading-[1.5] text-[#68756c]';
-            description.textContent = `${goal.goal} ${goalUnits[goal.category]?.unit || ''}`.trim();
-            const date = document.createElement('time');
-            date.className = 'mt-[5px] block text-[13px] leading-[1.5] text-[#68756c]';
-            date.dateTime = goal.date;
-            date.textContent = `Target date: ${goal.date}`;
+            description.textContent = `${categoryLabels[goal.category] || goal.category}: ${goal.goal} ${goalUnits[goal.category]?.unit || ''}`.trim();
+            const startDate = document.createElement('time');
+            startDate.className = 'mt-[5px] block text-[13px] leading-[1.5] text-[#68756c]';
+            startDate.dateTime = goal.start_date;
+            startDate.textContent = `Start date: ${goal.start_date}`;
+            const doneByDate = document.createElement('time');
+            doneByDate.className = 'mt-[5px] block text-[13px] leading-[1.5] text-[#68756c]';
+            doneByDate.dateTime = goal.done_by_date;
+            doneByDate.textContent = `End date: ${goal.done_by_date}`;
 
             const actions = document.createElement('div');
             actions.className = 'mt-3 flex gap-[9px]';
@@ -151,7 +169,7 @@
             deleteButton.textContent = 'Delete';
             actions.append(editButton, deleteButton);
 
-            item.replaceChildren(title, description, date, actions);
+            item.replaceChildren(title, description, startDate, doneByDate, actions);
             if (!existing) {
                 goalList.prepend(item);
             }
@@ -171,12 +189,18 @@
             categoryInput.dispatchEvent(new Event('change'));
         }
 
+        function updateDateRangeConstraints() {
+            startDateInput.max = doneByDateInput.value;
+            doneByDateInput.min = startDateInput.value;
+        }
+
         function stopEditing() {
             editingGoalId = null;
             reviewedGoal = null;
             review.hidden = true;
             form.hidden = false;
             form.reset();
+            updateDateRangeConstraints();
             setGoalCategory('');
             reviewButton.textContent = 'Review goal';
             cancelEditButton.hidden = true;
@@ -186,9 +210,12 @@
         function beginEditing(goal) {
             editingGoalId = goal.id;
             form.reset();
+            nameInput.value = goal.goal_name || '';
             setGoalCategory(goal.category);
             goalInput.value = goal.goal;
-            document.getElementById('date').value = goal.date;
+            startDateInput.value = goal.start_date;
+            doneByDateInput.value = goal.done_by_date;
+            updateDateRangeConstraints();
             review.hidden = true;
             form.hidden = false;
             reviewButton.textContent = 'Review changes';
@@ -207,6 +234,9 @@
             goalInput.value = '';
         });
 
+        startDateInput.addEventListener('change', updateDateRangeConstraints);
+        doneByDateInput.addEventListener('change', updateDateRangeConstraints);
+
         form.addEventListener('submit', (event) => {
             event.preventDefault();
             if (!form.reportValidity()) {
@@ -216,9 +246,11 @@
             const values = new FormData(form);
             const goalValue = Number(values.get('goal'));
             reviewedGoal = {
+                goal_name: values.get('goal_name').trim(),
                 category: values.get('category'),
                 goal: goalValue,
-                date: values.get('date')
+                start_date: values.get('start_date'),
+                done_by_date: values.get('done_by_date')
             };
             if (!Number.isFinite(goalValue) || goalValue <= 0) {
                 goalInput.setCustomValidity('Enter a number greater than zero.');
@@ -227,10 +259,19 @@
                 return;
             }
 
+            if (reviewedGoal.start_date > reviewedGoal.done_by_date) {
+                doneByDateInput.setCustomValidity('End date must be on or after the start date.');
+                doneByDateInput.reportValidity();
+                doneByDateInput.setCustomValidity('');
+                return;
+            }
+
+            document.getElementById('review-name').textContent = reviewedGoal.goal_name;
             document.getElementById('review-category').textContent = categoryLabels[reviewedGoal.category];
             document.getElementById('review-goal').textContent =
                 `${reviewedGoal.goal} ${goalUnits[reviewedGoal.category].unit}`;
-            document.getElementById('review-date').textContent = reviewedGoal.date;
+            document.getElementById('review-start-date').textContent = reviewedGoal.start_date;
+            document.getElementById('review-done-by-date').textContent = reviewedGoal.done_by_date;
             reviewHeading.textContent = editingGoalId === null ? 'Review your goal' : 'Review your changes';
             confirmButton.textContent = editingGoalId === null ? 'Confirm and save' : 'Confirm changes';
             form.hidden = true;
