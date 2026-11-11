@@ -1,39 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f4f6f1">
-    <title>Your health dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="min-h-screen min-w-[320px] bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
-    <main id="dashboard-page" class="mx-auto my-6 w-full max-w-[1000px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:my-0 max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8" hidden>
-        <div class="mb-[26px] inline-flex items-center gap-[10px] text-sm font-bold tracking-[0.06em] text-[#193d2d]"><span class="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-[#c9e6c6] text-[21px] text-[#193d2d]" aria-hidden="true">+</span> WELLBEING</div>
-        <div class="mb-7 flex flex-wrap items-start justify-between gap-4">
-            <div>
-                <h1 class="m-0 text-[30px] font-bold tracking-[-0.04em]">Your dashboard</h1>
-                <p class="mb-0 mt-[9px] text-sm leading-[1.6] text-[#68756c]">See your progress across all your health goals.</p>
-            </div>
-            <nav class="flex flex-wrap gap-4 text-[13px] font-bold text-[#28603e]" aria-label="Account navigation">
-                <a class="mt-2 no-underline hover:underline" href="index.php">Account</a>
-                <a class="mt-2 no-underline hover:underline" href="goals.php">Manage goals</a>
-                <a class="mt-2 no-underline hover:underline" href="entries.php">Add entry</a>
-            </nav>
+<?php
+$pageTitle = 'Your health dashboard';
+include __DIR__ . '/includes/header.html';
+include __DIR__ . '/includes/navigation.php';
+?>
+    <main id="dashboard-page" class="container mx-auto my-0 w-full max-w-6xl" hidden>
+        <div class="mb-7">
+            <h1 class="m-0 text-[30px] font-bold tracking-[-0.04em]">Your dashboard</h1>
+            <p class="mb-0 mt-[9px] text-sm leading-[1.6] text-[#68756c]">See your progress across all your health goals.</p>
         </div>
 
         <div id="dashboard-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="alert" hidden></div>
 
-        <section class="mb-7 grid grid-cols-3 gap-3 max-[600px]:grid-cols-1" aria-label="Goal summary">
-            <div class="rounded-[10px] bg-[#f4f6f1] p-4">
+        <section class="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="Goal summary">
+            <div class="rounded-lg bg-white p-6 shadow-sm">
                 <p class="m-0 text-[12px] font-semibold text-[#68756c]">Total goals</p>
                 <p id="total-goals" class="mb-0 mt-1 text-[25px] font-bold text-[#193d2d]">0</p>
             </div>
-            <div class="rounded-[10px] bg-[#f1faf3] p-4">
+            <div class="rounded-lg bg-white p-6 shadow-sm">
                 <p class="m-0 text-[12px] font-semibold text-[#516c58]">Completed</p>
                 <p id="completed-goals" class="mb-0 mt-1 text-[25px] font-bold text-[#245c36]">0</p>
             </div>
-            <div class="rounded-[10px] bg-[#f4f6f1] p-4">
+            <div class="rounded-lg bg-white p-6 shadow-sm">
                 <p class="m-0 text-[12px] font-semibold text-[#68756c]">In progress</p>
                 <p id="active-goals" class="mb-0 mt-1 text-[25px] font-bold text-[#193d2d]">0</p>
             </div>
@@ -45,7 +32,7 @@
                 <a class="text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="goals.php">Add or edit goals</a>
             </div>
             <p id="dashboard-empty" class="rounded-[10px] bg-[#f4f6f1] p-[14px] text-sm leading-[1.5] text-[#68756c]" hidden>You haven't added any goals yet. <a class="font-bold text-[#28603e]" href="goals.php">Create your first goal</a>.</p>
-            <ul id="dashboard-goal-list" class="m-0 grid list-none gap-4 p-0 md:grid-cols-2"></ul>
+            <ul id="dashboard-goal-list" class="m-0 grid list-none gap-6 p-0 md:grid-cols-2 xl:grid-cols-3"></ul>
         </section>
     </main>
     <p id="dashboard-loading" class="mx-auto mb-7 mt-[9px] max-w-[1000px] text-sm leading-[1.6] text-[#68756c]">Loading your goals...</p>
@@ -137,7 +124,7 @@
             const percent = target > 0 ? Math.min((progress.value / target) * 100, 100) : 0;
             const status = goalStatus(goal, today);
             const item = document.createElement('li');
-            item.className = 'rounded-[12px] border border-[#e6e9e1] bg-[#fbfcfa] p-5';
+            item.className = 'overflow-hidden rounded-lg border border-[#E5E7EB] bg-white p-7 shadow-sm transition hover:shadow-md';
 
             const topRow = document.createElement('div');
             topRow.className = 'flex items-start justify-between gap-3';
@@ -162,7 +149,7 @@
                 : `Recorded: ${formatNumber(progress.value)} ${units[goal.category]} / ${formatNumber(target)} ${units[goal.category]} goal`;
 
             const progressTrack = document.createElement('div');
-            progressTrack.className = 'mt-3 h-2 overflow-hidden rounded-full bg-[#e6e9e1]';
+            progressTrack.className = 'mt-3 h-2 overflow-hidden rounded-full bg-[#E5E7EB]';
             progressTrack.setAttribute('role', 'progressbar');
             progressTrack.setAttribute('aria-label', `${title.textContent} progress`);
             progressTrack.setAttribute('aria-valuemin', '0');
@@ -182,7 +169,7 @@
             dates.textContent = `Dates: ${goal.start_date} – ${goal.done_by_date}`;
 
             const footer = document.createElement('div');
-            footer.className = 'mt-4 flex items-center justify-between gap-3 border-t border-[#e6e9e1] pt-3';
+            footer.className = 'mt-4 flex items-center justify-between gap-3 border-t border-[#E5E7EB] pt-3';
             const entryCount = document.createElement('span');
             entryCount.className = 'text-[11px] text-[#68756c]';
             entryCount.textContent = `${progress.recorded} ${progress.recorded === 1 ? 'entry' : 'entries'} in period`;
@@ -232,5 +219,4 @@
 
         loadDashboard();
     </script>
-</body>
-</html>
+<?php include __DIR__ . '/includes/footer.php'; ?>

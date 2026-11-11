@@ -22,5 +22,4 @@ garphify
     e. AI-viestit
 
 Ehottomasti ne include headerit eli navit ja footerit!! on hirvee setti nyt
-Google remote desktop (chrome) D:
  Tailwind Components

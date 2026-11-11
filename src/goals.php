@@ -1,31 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f4f6f1">
-    <title>Your health goals</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="min-h-screen min-w-[320px] bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
-    <main id="goals-page" class="mx-auto my-6 w-full max-w-[1000px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:my-0 max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8" hidden>
-        <div class="mb-[26px] inline-flex items-center gap-[10px] text-sm font-bold tracking-[0.06em] text-[#193d2d]"><span class="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-[#c9e6c6] text-[21px] text-[#193d2d]" aria-hidden="true">+</span> WELLBEING</div>
-        <div class="flex items-start justify-between gap-4">
-            <div>
-                <h1 class="m-0 text-[30px] font-bold tracking-[-0.04em]">Health goals</h1>
-                <p class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Choose a health parameter and set a goal to work toward.</p>
-            </div>
-            <nav class="flex flex-wrap gap-4">
-                <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="dashboard.php">Dashboard</a>
-                <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="index.php">Back to account</a>
-            </nav>
+<?php
+$pageTitle = 'Your health goals';
+include __DIR__ . '/includes/header.html';
+include __DIR__ . '/includes/navigation.php';
+?>
+    <main id="goals-page" class="container mx-auto my-0 w-full max-w-6xl" hidden>
+        <div class="mb-7">
+            <h1 class="m-0 text-[30px] font-bold tracking-[-0.04em]">Health goals</h1>
+            <p class="mb-0 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Choose a health parameter and set a goal to work toward.</p>
         </div>
 
         <div id="goal-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="alert" hidden>
             <button id="cancel-saved-goal" class="ml-3 cursor-pointer rounded-[7px] border border-[#dce2da] bg-white px-3 py-1 font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] disabled:cursor-wait disabled:opacity-70" type="button" hidden>Cancel</button>
         </div>
 
-        <form id="goal-form" class="grid grid-cols-2 gap-x-5 max-[700px]:grid-cols-1">
+        <form id="goal-form" class="mb-10 grid grid-cols-2 gap-x-5 rounded-lg bg-white p-6 shadow-sm sm:p-9 max-[700px]:grid-cols-1">
             <div class="mb-[18px]">
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="goal-name">Goal name</label>
                 <input id="goal-name" name="goal_name" type="text" maxlength="100" required placeholder="e.g. Run regularly"
@@ -64,7 +52,7 @@
         <section aria-labelledby="saved-goals-heading">
             <h2 id="saved-goals-heading" class="mb-[14px] mt-[26px] text-lg font-bold tracking-[-0.02em]">Your saved goals</h2>
             <p id="goal-empty" class="rounded-[10px] bg-[#f4f6f1] p-[14px] text-sm leading-[1.5] text-[#68756c]" hidden>You haven't added any goals yet.</p>
-            <ul id="goal-list" class="m-0 grid list-none gap-3 p-0 md:grid-cols-2"></ul>
+            <ul id="goal-list" class="m-0 grid list-none gap-6 p-0 md:grid-cols-2 xl:grid-cols-3"></ul>
         </section>
     </main>
     <p id="loading-message" class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Checking your sign-in...</p>
@@ -134,7 +122,7 @@
         function addGoalToList(goal) {
             const existing = goalList.querySelector(`[data-goal-id="${goal.id}"]`);
             const item = existing || document.createElement('li');
-            item.className = 'rounded-[10px] border border-[#e6e9e1] bg-[#fbfcfa] p-[14px]';
+            item.className = 'rounded-lg border border-[#E5E7EB] bg-white p-6 shadow-sm transition hover:shadow-md';
             item.dataset.goalId = goal.id;
 
             const title = document.createElement('strong');
@@ -458,5 +446,4 @@
                 loadingMessage.textContent = error.message || 'Unable to load your goals.';
             });
     </script>
-</body>
-</html>
+<?php include __DIR__ . '/includes/footer.php'; ?>

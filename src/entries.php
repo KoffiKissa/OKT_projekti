@@ -1,31 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f4f6f1">
-    <title>New health entry</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="min-h-screen min-w-[320px] bg-gradient-to-br from-[#e1eee2] via-[#f4f6f1] to-[#e8eee1] p-6 font-['Segoe_UI',Arial,sans-serif] text-[#1b2b21] [font-synthesis:none] [text-rendering:optimizeLegibility] max-[480px]:p-[14px]">
-    <main id="entries-page" class="mx-auto my-6 w-full max-w-[1000px] rounded-[22px] border border-[#e6e9e1] bg-white p-11 shadow-[0_24px_70px_#253c2c14] max-[480px]:my-0 max-[480px]:rounded-[17px] max-[480px]:px-[26px] max-[480px]:py-8" hidden>
-        <div class="mb-[26px] inline-flex items-center gap-[10px] text-sm font-bold tracking-[0.06em] text-[#193d2d]"><span class="grid h-[34px] w-[34px] place-items-center rounded-[11px] bg-[#c9e6c6] text-[21px] text-[#193d2d]" aria-hidden="true">+</span> WELLBEING</div>
-        <div class="flex items-start justify-between gap-4">
-            <div>
-                <h1 id="entry-form-heading" class="m-0 text-[30px] font-bold tracking-[-0.04em]">New entry</h1>
-                <p id="entry-form-intro" class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Enter a health measurement and save it.</p>
-            </div>
-            <nav class="flex flex-wrap gap-4">
-                <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="dashboard.php">Dashboard</a>
-                <a class="mt-2 whitespace-nowrap text-[13px] font-bold text-[#28603e] no-underline hover:underline" href="index.php">Back to account</a>
-            </nav>
+<?php
+$pageTitle = 'New health entry';
+include __DIR__ . '/includes/header.html';
+include __DIR__ . '/includes/navigation.php';
+?>
+    <main id="entries-page" class="container mx-auto my-0 w-full max-w-6xl" hidden>
+        <div class="mb-7">
+            <h1 id="entry-form-heading" class="m-0 text-[30px] font-bold tracking-[-0.04em]">New entry</h1>
+            <p id="entry-form-intro" class="mb-0 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Enter a health measurement and save it.</p>
         </div>
 
         <div id="entry-message" class="mb-[18px] rounded-[9px] border border-[#f0d2cf] bg-[#fff5f4] px-[14px] py-3 text-[13px] leading-[1.5] text-[#832e28]" role="status" hidden>
             <button id="undo-entry-button" class="ml-3 cursor-pointer rounded-[7px] border border-[#dce2da] bg-white px-3 py-1 font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] disabled:cursor-wait disabled:opacity-70" type="button" hidden>Undo changes</button>
         </div>
 
-        <form id="entry-form" class="grid grid-cols-2 gap-x-5 max-[700px]:grid-cols-1">
+        <form id="entry-form" class="mb-10 grid grid-cols-2 gap-x-5 rounded-lg bg-white p-6 shadow-sm sm:p-9 max-[700px]:grid-cols-1">
             <div class="mb-[18px]">
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="category">Health parameter</label>
                 <select id="category" name="category" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
@@ -69,7 +57,7 @@
         <section aria-labelledby="entry-history-heading">
             <h2 id="entry-history-heading" class="mb-[14px] mt-[26px] text-lg font-bold tracking-[-0.02em]">Your recent entries</h2>
             <p id="entry-empty" class="rounded-[10px] bg-[#f4f6f1] p-[14px] text-sm leading-[1.5] text-[#68756c]" hidden>You haven't recorded any measurements yet.</p>
-            <ul id="entry-list" class="m-0 grid list-none gap-3 p-0 md:grid-cols-2"></ul>
+            <ul id="entry-list" class="m-0 grid list-none gap-6 p-0 md:grid-cols-2 xl:grid-cols-3"></ul>
         </section>
     </main>
     <p id="loading-message" class="mb-7 mt-[9px] text-sm leading-[1.6] text-[#68756c]">Checking your sign-in...</p>
@@ -165,8 +153,8 @@
         function addEntryToList(entry) {
             const item = document.createElement('li');
             item.className = Number(entry.id) === editingEntryId
-                ? 'flex items-start justify-between gap-3 rounded-[10px] border border-[#3a7752] bg-[#f1faf3] p-[14px] ring-2 ring-[#9fcba9]'
-                : 'flex items-start justify-between gap-3 rounded-[10px] border border-[#e6e9e1] bg-[#fbfcfa] p-[14px]';
+                ? 'flex items-start justify-between gap-3 rounded-lg border border-[#3a7752] bg-white p-6 shadow-sm ring-2 ring-[#9fcba9]'
+                : 'flex items-start justify-between gap-3 rounded-lg border border-[#E5E7EB] bg-white p-6 shadow-sm transition hover:shadow-md';
             const details = document.createElement('div');
             details.className = 'min-w-0';
             const title = document.createElement('strong');
@@ -431,5 +419,4 @@
                 loadingMessage.textContent = error.message || 'Unable to load your health entries.';
             });
     </script>
-</body>
-</html>
+<?php include __DIR__ . '/includes/footer.php'; ?>
