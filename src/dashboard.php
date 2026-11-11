@@ -118,6 +118,176 @@ include __DIR__ . '/includes/navigation.php';
             return { label: 'In progress', className: 'bg-[#f4f6f1] text-[#516c58]' };
         }
 
+        function shiftDateByMonth(dateString, monthOffset) {
+            const date = new Date(`${dateString}T00:00:00Z`);
+            const targetMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + monthOffset, 1));
+            const lastDay = new Date(Date.UTC(
+                targetMonth.getUTCFullYear(),
+                targetMonth.getUTCMonth() + 1,
+                0
+            )).getUTCDate();
+            targetMonth.setUTCDate(Math.min(date.getUTCDate(), lastDay));
+            return targetMonth.toISOString().slice(0, 10);
+        }
+
+        function svgElement(name, attributes = {}) {
+            const element = document.createElementNS('http://www.w3.org/2000/svg', name);
+            Object.entries(attributes).forEach(([attribute, value]) => {
+                element.setAttribute(attribute, String(value));
+            });
+            return element;
+        }
+
+        function renderWeightChart(goal, entries, today) {
+            const isActiveGoal = !goal.goal_done
+                && goal.start_date <= today
+                && goal.done_by_date >= today;
+            const startDate = isActiveGoal ? goal.start_date : shiftDateByMonth(today, -1);
+            const endDate = isActiveGoal ? goal.done_by_date : today;
+            const startTime = new Date(`${startDate}T00:00:00Z`).getTime();
+            const endTime = new Date(`${endDate}T00:00:00Z`).getTime();
+            const measurements = entries
+                .filter((entry) => entry.category === 'weight'
+                    && entry.date >= startDate
+                    && entry.date <= endDate
+                    && entry.date <= today)
+                .map((entry) => ({ date: entry.date, value: parseEntryValue(entry), id: Number(entry.id) }))
+                .filter((entry) => entry.value !== null)
+                .sort((first, second) => first.date.localeCompare(second.date) || first.id - second.id);
+            const target = Number(goal.goal);
+            const maxMeasurement = measurements.reduce(
+                (maximum, entry) => Math.max(maximum, entry.value),
+                target
+            );
+            const yPadding = Math.max((maxMeasurement - target) * 0.12, target * 0.08, 1);
+            const chartTop = 12;
+            const chartBottom = 104;
+            const chartLeft = 34;
+            const chartRight = 306;
+            const chartMax = maxMeasurement + yPadding;
+            const xForDate = (date) => endTime === startTime
+                ? (chartLeft + chartRight) / 2
+                : chartLeft + ((new Date(`${date}T00:00:00Z`).getTime() - startTime) / (endTime - startTime))
+                    * (chartRight - chartLeft);
+            const yForValue = (value) => chartBottom
+                - ((Math.max(value, target) - target) / (chartMax - target)) * (chartBottom - chartTop);
+
+            const figure = document.createElement('figure');
+            figure.className = 'mb-0 mt-5 rounded-lg bg-[#F9FAFB] p-4';
+            const heading = document.createElement('figcaption');
+            heading.className = 'mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-[#26372d]';
+            const headingLabel = document.createElement('span');
+            headingLabel.textContent = 'Weight trend';
+            const dateRange = document.createElement('span');
+            dateRange.className = 'text-right text-[10px] font-normal text-[#68756c]';
+            dateRange.textContent = isActiveGoal ? 'Active goal period' : 'Last month';
+            heading.append(headingLabel, dateRange);
+
+            const chart = svgElement('svg', {
+                viewBox: '0 0 320 122',
+                class: 'h-32 w-full overflow-visible',
+                role: 'img',
+                'aria-label': `Weight trend from ${startDate} to ${endDate}. Goal: ${formatNumber(target)} kg.`
+            });
+            [chartTop, (chartTop + chartBottom) / 2].forEach((y) => {
+                chart.append(svgElement('line', {
+                    x1: chartLeft,
+                    y1: y,
+                    x2: chartRight,
+                    y2: y,
+                    stroke: '#E5E7EB',
+                    'stroke-width': 1
+                }));
+            });
+            chart.append(svgElement('line', {
+                x1: chartLeft,
+                y1: chartBottom,
+                x2: chartRight,
+                y2: chartBottom,
+                stroke: '#16A34A',
+                'stroke-width': 1.5,
+                'stroke-dasharray': '4 4'
+            }));
+
+            const points = measurements.map((entry) => ({
+                ...entry,
+                x: xForDate(entry.date),
+                y: yForValue(entry.value)
+            }));
+            for (let index = 1; index < points.length; index += 1) {
+                const previous = points[index - 1];
+                const current = points[index];
+                const color = current.value > previous.value
+                    ? '#DC4C4C'
+                    : current.value < previous.value
+                        ? '#16A34A'
+                        : '#94A3B8';
+                chart.append(svgElement('line', {
+                    x1: previous.x,
+                    y1: previous.y,
+                    x2: current.x,
+                    y2: current.y,
+                    stroke: color,
+                    'stroke-width': 3,
+                    'stroke-linecap': 'round'
+                }));
+            }
+            points.forEach((point, index) => {
+                const direction = index === 0 ? 0 : point.value - points[index - 1].value;
+                const marker = svgElement('circle', {
+                    cx: point.x,
+                    cy: point.y,
+                    r: 4,
+                    fill: direction > 0 ? '#DC4C4C' : direction < 0 ? '#16A34A' : '#64748B',
+                    stroke: '#FFFFFF',
+                    'stroke-width': 2
+                });
+                const tooltip = svgElement('title');
+                tooltip.textContent = `${point.date}: ${formatNumber(point.value)} kg`;
+                marker.append(tooltip);
+                chart.append(marker);
+            });
+
+            const goalLabel = document.createElement('p');
+            goalLabel.className = 'mb-0 mt-1 text-[10px] font-semibold text-[#15803D]';
+            goalLabel.textContent = `Goal · ${formatNumber(target)} kg`;
+
+            const legend = document.createElement('div');
+            legend.className = 'mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-[#68756c]';
+            [
+                ['#DC4C4C', '↑ Increasing'],
+                ['#16A34A', '↓ Decreasing']
+            ].forEach(([color, label]) => {
+                const item = document.createElement('span');
+                item.className = 'inline-flex items-center gap-1';
+                const marker = document.createElement('span');
+                marker.className = 'h-2 w-2 rounded-full';
+                marker.style.backgroundColor = color;
+                marker.setAttribute('aria-hidden', 'true');
+                item.append(marker, document.createTextNode(label));
+                legend.append(item);
+            });
+
+            const dateLabels = document.createElement('div');
+            dateLabels.className = 'mt-1 flex justify-between text-[10px] text-[#68756c]';
+            const startLabel = document.createElement('time');
+            startLabel.dateTime = startDate;
+            startLabel.textContent = startDate;
+            const endLabel = document.createElement('time');
+            endLabel.dateTime = endDate;
+            endLabel.textContent = endDate;
+            dateLabels.append(startLabel, endLabel);
+
+            figure.append(heading, chart, goalLabel, legend, dateLabels);
+            if (measurements.length === 0) {
+                const emptyChartMessage = document.createElement('p');
+                emptyChartMessage.className = 'mb-0 mt-2 text-[11px] text-[#68756c]';
+                emptyChartMessage.textContent = 'No weight entries recorded during this period yet.';
+                figure.append(emptyChartMessage);
+            }
+            return figure;
+        }
+
         function renderGoal(goal, entries, today) {
             const progress = calculateProgress(goal, entries, today);
             const target = Number(goal.goal);
@@ -147,6 +317,10 @@ include __DIR__ . '/includes/navigation.php';
             value.textContent = goal.category === 'steps'
                 ? `Average: ${formatNumber(progress.value)} ${units[goal.category]} / ${formatNumber(target)} ${units[goal.category]} goal`
                 : `Recorded: ${formatNumber(progress.value)} ${units[goal.category]} / ${formatNumber(target)} ${units[goal.category]} goal`;
+
+            const weightChart = goal.category === 'weight'
+                ? renderWeightChart(goal, entries, today)
+                : null;
 
             const progressTrack = document.createElement('div');
             progressTrack.className = 'mt-3 h-2 overflow-hidden rounded-full bg-[#E5E7EB]';
@@ -179,7 +353,15 @@ include __DIR__ . '/includes/navigation.php';
             manageLink.textContent = 'Manage';
             footer.append(entryCount, manageLink);
 
-            item.append(topRow, value, progressTrack, progressCaption, dates, footer);
+            item.append(
+                topRow,
+                value,
+                ...(weightChart ? [weightChart] : []),
+                progressTrack,
+                progressCaption,
+                dates,
+                footer
+            );
             return item;
         }
 
