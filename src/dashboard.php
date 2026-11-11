@@ -1,6 +1,6 @@
 <?php
 $pageTitle = 'Your health dashboard';
-include __DIR__ . '/includes/header.html';
+include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/navigation.php';
 ?>
     <main id="dashboard-page" class="container mx-auto my-0 w-full max-w-6xl" hidden>

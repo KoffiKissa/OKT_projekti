@@ -1,6 +1,6 @@
 <?php
 $pageTitle = 'Sign in';
-include __DIR__ . '/includes/header.html';
+include __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/navigation.php';
 ?>
     <main class="mx-auto my-0 w-full max-w-[560px] rounded-lg bg-white p-8 shadow-sm sm:p-10">
