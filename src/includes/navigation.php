@@ -13,34 +13,3 @@
         <a class="no-underline hover:underline" href="entries.php">Health entries</a>
     </nav>
 </header>
-<script>
-    const siteNavigationLinks = document.getElementById('site-navigation-links');
-    const siteNavigationUser = document.getElementById('site-navigation-user');
-    let navigationCheckVersion = 0;
-
-    window.setSiteNavigationVisible = (isVisible, username = '') => {
-        navigationCheckVersion += 1;
-        siteNavigationLinks.style.display = isVisible ? 'flex' : 'none';
-        siteNavigationUser.style.display = isVisible ? 'block' : 'none';
-        siteNavigationUser.textContent = isVisible && username ? `Logged in as ${username}` : '';
-    };
-
-    const currentNavigationCheck = navigationCheckVersion;
-    fetch('api.php')
-        .then(async (response) => {
-            if (response.status === 401) {
-                return false;
-            }
-            if (!response.ok) {
-                throw new Error('Unable to verify sign-in status for navigation.');
-            }
-            const data = await response.json();
-            return data.user || null;
-        })
-        .then((user) => {
-            if (currentNavigationCheck === navigationCheckVersion) {
-                window.setSiteNavigationVisible(Boolean(user), user ? user.username : '');
-            }
-        })
-        .catch((error) => console.error(error));
-</script>

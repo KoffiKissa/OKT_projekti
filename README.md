@@ -19,10 +19,11 @@ also be undone immediately after saving.
 
 After signing in, use **View your progress dashboard** to see all goals with
 their current progress, completion status, date range, and number of entries
-recorded during each goal period. Step progress uses the daily average across
-the elapsed date range through today (capped at the goal end date), counting
-days without an entry as zero and excluding future days. Multiple step entries
-on the same date are all included in that day's total.
+recorded during each goal period. The dashboard also shows current BMI based
+on the user's height and latest recorded weight. Step progress uses the daily
+average across the elapsed date range through today (capped at the goal end
+date), counting days without an entry as zero and excluding future days.
+Multiple step entries on the same date are all included in that day's total.
 
 ## Health goals
 
@@ -33,12 +34,14 @@ be saved directly from the goal form; edits can be canceled before saving.
 After creating a goal, use **Cancel** in the success message to remove it if it
 was saved by mistake and return its details to the form for editing.
 Goals can be marked complete manually, or automatically when matching entries
-within the date range reach the target (`goal_done` is set to `1`). Weight, sleep, and
-blood pressure use the sum of matching entries (blood pressure uses systolic
-values); steps goals are achieved when the average daily steps over elapsed
-calendar days in the goal's date range (including days with no entry as zero,
-but excluding future days) meets or exceeds the target. Multiple step entries
-on a date are summed.
+within the date range reach the target (`goal_done` is set to `1`). Weight goals
+compare individual readings (a reading at or below the target reaches the goal);
+the dashboard shows the latest weight reading in the period. Sleep and blood
+pressure use the sum of matching entries (blood pressure uses systolic values).
+Steps goals are achieved when the average daily steps over elapsed calendar days
+in the goal's date range (including days with no entry as zero, but excluding
+future days) meets or exceeds the target. Multiple step entries on a date are
+summed.
 
 For an existing database that still has the old `date` column, migrate it and
 add `start_date` before using the updated goal form. If that database does not
