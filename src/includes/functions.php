@@ -87,7 +87,13 @@ function elapsedGoalDays(string $startDate, string $doneByDate): int
     return $start->diff($end)->days + 1;
 }
 
-function averageStepsForGoal(PDO $pdo, int $userId, string $startDate, string $doneByDate): float
+function averageDailyValueForGoal(
+    PDO $pdo,
+    int $userId,
+    string $category,
+    string $startDate,
+    string $doneByDate
+): float
 {
     $throughDate = min($doneByDate, (new DateTimeImmutable('today'))->format('Y-m-d'));
     $days = elapsedGoalDays($startDate, $doneByDate);
@@ -103,7 +109,7 @@ function averageStepsForGoal(PDO $pdo, int $userId, string $startDate, string $d
     );
     $statement->execute([
         'user_id' => $userId,
-        'category' => 'steps',
+        'category' => $category,
         'start_date' => $startDate,
         'through_date' => $throughDate,
     ]);
@@ -129,7 +135,8 @@ function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category):
                      FROM health_markers
                      WHERE user_id = :user_id AND category = :category
                        AND date >= :start_date AND date <= :done_by_date';
-    if ($category === 'steps') {
+    $isDailyAverageCategory = in_array($category, ['steps', 'sleep'], true);
+    if ($isDailyAverageCategory) {
         $entriesQuery .= ' AND date <= :through_date';
     }
     $entriesStatement = $pdo->prepare($entriesQuery);
@@ -146,7 +153,7 @@ function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category):
             'start_date' => $goal['start_date'],
             'done_by_date' => $goal['done_by_date'],
         ];
-        if ($category === 'steps') {
+        if ($isDailyAverageCategory) {
             $entryParameters['through_date'] = min(
                 (string) $goal['done_by_date'],
                 (new DateTimeImmutable('today'))->format('Y-m-d')
@@ -171,7 +178,7 @@ function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category):
 
         if ($category === 'weight') {
             $reached = $weightGoalReached;
-        } elseif ($category === 'steps') {
+        } elseif ($isDailyAverageCategory) {
             $periodDays = elapsedGoalDays((string) $goal['start_date'], (string) $goal['done_by_date']);
             $reached = $periodDays > 0 && ($total / $periodDays) >= (float) $goal['goal'];
         } else {
@@ -184,6 +191,97 @@ function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category):
             ]);
         }
     }
+}
+
+function nearestWeightForDate(array $weightEntries, string $entryDate): ?float
+{
+    $targetDate = new DateTimeImmutable($entryDate);
+    $nearestWeight = null;
+    $nearestDistance = PHP_INT_MAX;
+    $nearestIsBefore = false;
+    $nearestId = -1;
+
+    foreach ($weightEntries as $entry) {
+        if (!isset($entry['measurement'], $entry['date']) || !is_numeric($entry['measurement'])) {
+            continue;
+        }
+        $weight = (float) $entry['measurement'];
+        if ($weight <= 0 || !is_finite($weight)) {
+            continue;
+        }
+
+        $weightDate = new DateTimeImmutable((string) $entry['date']);
+        $distance = $weightDate->diff($targetDate)->days;
+        $isBefore = $weightDate <= $targetDate;
+        $id = (int) ($entry['id'] ?? 0);
+        if (
+            $distance < $nearestDistance
+            || ($distance === $nearestDistance && $isBefore && !$nearestIsBefore)
+            || ($distance === $nearestDistance && $isBefore === $nearestIsBefore && $id > $nearestId)
+        ) {
+            $nearestWeight = $weight;
+            $nearestDistance = $distance;
+            $nearestIsBefore = $isBefore;
+            $nearestId = $id;
+        }
+    }
+
+    return $nearestWeight;
+}
+
+function calculateCaloriesBurned(
+    PDO $pdo,
+    int $userId,
+    string $entryDate,
+    int $steps,
+    ?float $heightCm = null,
+    ?array $weightEntries = null
+): ?int {
+    if ($heightCm === null) {
+        $heightStatement = $pdo->prepare('SELECT length FROM users WHERE user_id = :user_id');
+        $heightStatement->execute(['user_id' => $userId]);
+        $savedHeight = $heightStatement->fetchColumn();
+        if (!is_numeric($savedHeight)) {
+            return null;
+        }
+        $heightCm = (float) $savedHeight;
+    }
+
+    if ($heightCm <= 0 || !is_finite($heightCm) || $steps < 0) {
+        return null;
+    }
+
+    if ($weightEntries === null) {
+        $weightStatement = $pdo->prepare(
+            'SELECT id, measurement, date
+             FROM health_markers
+             WHERE user_id = :user_id AND category = :category
+             ORDER BY date DESC, id DESC'
+        );
+        $weightStatement->execute([
+            'user_id' => $userId,
+            'category' => 'weight',
+        ]);
+        $weightEntries = $weightStatement->fetchAll();
+    }
+
+    $weightKg = nearestWeightForDate($weightEntries, $entryDate);
+    if ($weightKg === null) {
+        if ($weightEntries !== []) {
+            return null;
+        }
+        $heightMeters = $heightCm / 100;
+        $weightKg = 22 * ($heightMeters ** 2);
+    }
+
+    if ($weightKg <= 0 || !is_finite($weightKg)) {
+        return null;
+    }
+
+    $heightMeters = $heightCm / 100;
+    $distanceKm = ($steps * 0.415 * $heightMeters) / 1000;
+
+    return (int) round(0.5 * $weightKg * $distanceKm);
 }
 
 function calculateBMI(PDO $pdo, int $userId, ?float $weightKg = null, ?float $heightCm = null): ?float

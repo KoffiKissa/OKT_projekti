@@ -24,7 +24,7 @@ include __DIR__ . '/includes/navigation.php';
                 <select id="category" name="category" required class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
                     <option value="">Choose a parameter</option>
                     <option value="weight">Weight (kg)</option>
-                    <option value="sleep">Sleep (h)</option>
+                    <option value="sleep">Average daily sleep</option>
                     <option value="steps">Average daily steps</option>
                     <option value="blood_pressure">Blood pressure (mmHg)</option>
                 </select>

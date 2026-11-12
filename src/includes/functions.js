@@ -278,6 +278,16 @@
         const value = document.createElement('p');
         value.className = 'm-0 text-[13px] leading-[1.5] text-[#68756c]';
         value.textContent = formatMeasurement(entry);
+        const calories = entry.category === 'steps' ? document.createElement('p') : null;
+        if (calories) {
+            calories.className = 'm-0 text-[13px] leading-[1.5] text-[#68756c]';
+            const caloriesBurned = Number(entry.calories_burned);
+            calories.textContent = entry.calories_burned !== null
+                && entry.calories_burned !== undefined
+                && Number.isFinite(caloriesBurned)
+                ? `Estimated calories burned: ${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(caloriesBurned)} kcal`
+                : 'Estimated calories burned: Not available';
+        }
         const bmi = isWeightEntry ? document.createElement('div') : null;
         if (bmi) {
             bmi.className = 'self-start text-center';
@@ -303,7 +313,7 @@
             editButton.style.justifySelf = 'end';
         }
         editButton.addEventListener('click', () => startEditingEntry(entry));
-        details.append(title, value, date);
+        details.append(title, value, ...(calories ? [calories] : []), date);
         item.append(details, ...(bmi ? [bmi] : []), editButton);
         return item;
     }
@@ -574,13 +584,13 @@
     const cancelEditButton = document.getElementById('cancel-edit');
     const categoryLabels = {
         weight: 'Weight (kg)',
-        sleep: 'Sleep (h)',
+        sleep: 'Average daily sleep',
         steps: 'Average daily steps (steps/day)',
         blood_pressure: 'Blood pressure (mmHg)'
     };
     const goalUnits = {
         weight: { label: ' (kg)', unit: 'kg', step: '0.01', hint: 'Enter your target weight in kilograms.' },
-        sleep: { label: ' (h)', unit: 'h', step: '0.01', hint: 'Enter your target sleep duration in hours.' },
+        sleep: { label: ' (h/day average)', unit: 'h/day', step: '0.01', hint: 'Enter the average sleep duration per day you want during this goal period.' },
         steps: { label: ' (steps/day average)', unit: 'steps/day', min: '1', step: '1', hint: 'Enter the average daily steps you want to achieve during this goal period.' },
         blood_pressure: { label: ' (systolic mmHg)', unit: 'systolic mmHg', min: '1', step: '1', hint: 'Enter a whole-number systolic blood pressure target in mmHg.' }
     };
@@ -629,12 +639,16 @@
         const description = document.createElement('p');
         description.className = 'm-0 text-[13px] leading-[1.5] text-[#68756c]';
         description.textContent = `${categoryLabels[goal.category] || goal.category}: ${goal.goal} ${goalUnits[goal.category]?.unit || ''}`.trim();
-        const stepsAverage = document.createElement('p');
-        stepsAverage.className = 'mt-[5px] text-[13px] leading-[1.5] text-[#68756c]';
+        const dailyAverage = document.createElement('p');
+        dailyAverage.className = 'mt-[5px] text-[13px] leading-[1.5] text-[#68756c]';
         if (goal.category === 'steps') {
-            stepsAverage.textContent = goal.steps_average === null
+            dailyAverage.textContent = goal.steps_average === null
                 ? 'Average steps/day: no entries during this goal period yet.'
                 : `Average steps/day: ${Number(goal.steps_average.toFixed(2))}`;
+        } else if (goal.category === 'sleep') {
+            dailyAverage.textContent = goal.sleep_average === null
+                ? 'Average sleep/day: no entries during this goal period yet.'
+                : `Average sleep/day: ${Number(goal.sleep_average.toFixed(2))} h/day`;
         }
         const startDate = document.createElement('time');
         startDate.className = 'mt-[5px] block text-[13px] leading-[1.5] text-[#68756c]';
@@ -685,7 +699,7 @@
         item.replaceChildren(
             title,
             description,
-            ...(goal.category === 'steps' ? [stepsAverage] : []),
+            ...(['steps', 'sleep'].includes(goal.category) ? [dailyAverage] : []),
             startDate,
             doneByDate,
             status,
@@ -957,13 +971,13 @@
     const emptyMessage = document.getElementById('dashboard-empty');
     const categoryLabels = {
         weight: 'Weight',
-        sleep: 'Sleep',
+        sleep: 'Average daily sleep',
         steps: 'Average daily steps',
         blood_pressure: 'Blood pressure'
     };
     const units = {
         weight: 'kg',
-        sleep: 'h',
+        sleep: 'h/day',
         steps: 'steps/day',
         blood_pressure: 'systolic mmHg'
     };
@@ -993,7 +1007,7 @@
             entry.category === goal.category
             && entry.date >= goal.start_date
             && entry.date <= goal.done_by_date
-            && (goal.category !== 'steps' || entry.date <= today)
+            && (!['steps', 'sleep'].includes(goal.category) || entry.date <= today)
             && (goal.category !== 'weight' || entry.date <= today)
         );
         if (goal.category === 'weight') {
@@ -1014,7 +1028,7 @@
             return value === null ? sum : sum + value;
         }, 0);
 
-        if (goal.category !== 'steps') {
+        if (!['steps', 'sleep'].includes(goal.category)) {
             return { value: total, recorded: matchingEntries.length };
         }
 
@@ -1024,11 +1038,21 @@
         const days = elapsedEnd >= goal.start_date
             ? Math.floor((end - start) / 86400000) + 1
             : 0;
-        return { value: days > 0 ? total / days : 0, recorded: matchingEntries.length };
+        return {
+            value: days > 0 ? total / days : 0,
+            recorded: matchingEntries.length,
+            total
+        };
     }
 
     function formatNumber(value) {
         return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
+    }
+
+    function daysBetween(startDate, endDate) {
+        const start = new Date(`${startDate}T00:00:00Z`);
+        const end = new Date(`${endDate}T00:00:00Z`);
+        return Math.floor((end - start) / 86400000);
     }
 
     function goalStatus(goal, today) {
@@ -1214,7 +1238,8 @@
         return figure;
     }
 
-    function renderStepsChart(goal, entries, today) {
+    function renderDailyTotalsChart(goal, entries, today, category) {
+        const isSleepGoal = category === 'sleep';
         const isActiveGoal = !goal.goal_done
             && goal.start_date <= today
             && goal.done_by_date >= today;
@@ -1222,7 +1247,7 @@
         const endDate = isActiveGoal ? goal.done_by_date : today;
         const dailyTotals = new Map();
         entries
-            .filter((entry) => entry.category === 'steps'
+            .filter((entry) => entry.category === category
                 && entry.date >= startDate
                 && entry.date <= endDate
                 && entry.date <= today)
@@ -1258,7 +1283,7 @@
         const heading = document.createElement('figcaption');
         heading.className = 'mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-[#26372d]';
         const headingLabel = document.createElement('span');
-        headingLabel.textContent = 'Daily steps trend';
+        headingLabel.textContent = isSleepGoal ? 'Daily sleep trend' : 'Daily steps trend';
         const dateRange = document.createElement('span');
         dateRange.className = 'text-right text-[10px] font-normal text-[#68756c]';
         dateRange.textContent = isActiveGoal ? 'Active goal period' : 'Last month';
@@ -1268,7 +1293,9 @@
             viewBox: '0 0 320 122',
             class: 'h-32 w-full overflow-visible',
             role: 'img',
-            'aria-label': `Daily steps from ${startDate} to ${endDate}. Goal: ${formatNumber(target)} steps per day.`
+            'aria-label': isSleepGoal
+                ? `Daily sleep from ${startDate} to ${endDate}. Goal: ${formatNumber(target)} hours per day.`
+                : `Daily steps from ${startDate} to ${endDate}. Goal: ${formatNumber(target)} steps per day.`
         });
         [chartTop, (chartTop + chartBottom) / 2, chartBottom].forEach((y) => {
             chart.append(svgElement('line', {
@@ -1319,20 +1346,22 @@
                 'stroke-width': 2
             });
             const tooltip = svgElement('title');
-            tooltip.textContent = `${point.date}: ${formatNumber(point.value)} steps`;
+            tooltip.textContent = `${point.date}: ${formatNumber(point.value)} ${isSleepGoal ? 'h' : 'steps'}`;
             marker.append(tooltip);
             chart.append(marker);
         });
 
         const goalLabel = document.createElement('p');
         goalLabel.className = 'mb-0 mt-1 text-[10px] font-semibold text-[#15803D]';
-        goalLabel.textContent = `Daily goal · ${formatNumber(target)} steps`;
+        goalLabel.textContent = isSleepGoal
+            ? `Average daily goal · ${formatNumber(target)} h/day`
+            : `Daily goal · ${formatNumber(target)} steps`;
 
         const legend = document.createElement('div');
         legend.className = 'mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-[#68756c]';
         [
-            { color: '#64748B', label: 'Daily steps', isLine: false },
-            { color: '#16A34A', label: 'Daily goal', isLine: true }
+            { color: '#64748B', label: isSleepGoal ? 'Daily sleep' : 'Daily steps', isLine: false },
+            { color: '#16A34A', label: isSleepGoal ? 'Average daily goal' : 'Daily goal', isLine: true }
         ].forEach(({ color, label, isLine }) => {
             const item = document.createElement('span');
             item.className = 'inline-flex items-center gap-1';
@@ -1362,7 +1391,9 @@
         if (measurements.length === 0) {
             const emptyChartMessage = document.createElement('p');
             emptyChartMessage.className = 'mb-0 mt-2 text-[11px] text-[#68756c]';
-            emptyChartMessage.textContent = 'No step entries recorded during this period yet.';
+            emptyChartMessage.textContent = isSleepGoal
+                ? 'No sleep entries recorded during this period yet.'
+                : 'No step entries recorded during this period yet.';
             figure.append(emptyChartMessage);
         }
         return figure;
@@ -1393,7 +1424,7 @@
 
         const value = document.createElement('p');
         value.className = 'mb-0 mt-5 text-[13px] text-[#68756c]';
-        value.textContent = goal.category === 'steps'
+        value.textContent = ['steps', 'sleep'].includes(goal.category)
             ? `Average: ${formatNumber(progress.value)} ${units[goal.category]} / ${formatNumber(target)} ${units[goal.category]} goal`
             : goal.category === 'weight'
                 ? (progress.recorded > 0
@@ -1401,39 +1432,74 @@
                     : `No weight entries yet / ${formatNumber(target)} ${units[goal.category]} goal`)
             : `Recorded: ${formatNumber(progress.value)} ${units[goal.category]} / ${formatNumber(target)} ${units[goal.category]} goal`;
 
+        const stepsPlan = goal.category === 'steps' ? document.createElement('div') : null;
+        if (stepsPlan) {
+            stepsPlan.className = 'mt-3 space-y-1 text-[12px] leading-[1.5] text-[#516c58]';
+            const requiredSteps = document.createElement('p');
+            requiredSteps.className = 'm-0 font-semibold';
+            const daysToEnd = daysBetween(today, goal.done_by_date);
+            if (goal.goal_done) {
+                requiredSteps.textContent = 'Goal completed.';
+            } else if (daysToEnd < 0) {
+                requiredSteps.textContent = 'Daily steps needed: goal period has ended.';
+            } else {
+                const totalDays = daysBetween(goal.start_date, goal.done_by_date) + 1;
+                const remainingDays = goal.start_date > today
+                    ? totalDays
+                    : daysToEnd + 1;
+                const remainingSteps = Math.max((target * totalDays) - progress.total, 0);
+                const neededPerDay = Math.ceil(remainingSteps / remainingDays);
+                requiredSteps.textContent = `${formatNumber(neededPerDay)} steps needed daily to reach goal`;
+            }
+            stepsPlan.append(requiredSteps);
+        }
+
         const weightChart = goal.category === 'weight'
             ? renderWeightChart(goal, entries, today)
             : null;
-        const stepsChart = goal.category === 'steps'
-            ? renderStepsChart(goal, entries, today)
+        const dailyTotalsChart = ['steps', 'sleep'].includes(goal.category)
+            ? renderDailyTotalsChart(goal, entries, today, goal.category)
             : null;
 
-        const progressSection = document.createElement('div');
-        if (goal.category === 'weight') {
+        const durationDays = daysBetween(goal.start_date, goal.done_by_date);
+        const elapsedDays = daysBetween(goal.start_date, today);
+        const durationPercent = durationDays <= 0
+            ? (today >= goal.done_by_date ? 100 : 0)
+            : Math.min(Math.max((elapsedDays / durationDays) * 100, 0), 100);
+        const durationHeading = document.createElement('div');
+        durationHeading.className = 'mb-1 mt-3 flex items-center justify-between gap-2 text-[11px] font-semibold text-[#68756c]';
+        const durationLabel = document.createElement('span');
+        durationLabel.textContent = 'Goal duration';
+        const daysToEndLabel = document.createElement('span');
+        daysToEndLabel.className = 'text-right';
+        const daysToEnd = daysBetween(today, goal.done_by_date);
+        daysToEndLabel.textContent = daysToEnd < 0
+            ? `Goal ended ${formatNumber(Math.abs(daysToEnd))} ${Math.abs(daysToEnd) === 1 ? 'day' : 'days'} ago`
+            : `Days to goal end: ${formatNumber(daysToEnd)}`;
+        durationHeading.append(durationLabel, daysToEndLabel);
+        const durationTrack = document.createElement('div');
+        durationTrack.className = 'h-2 overflow-hidden rounded-full bg-[#E5E7EB]';
+        durationTrack.setAttribute('role', 'progressbar');
+        durationTrack.setAttribute('aria-label', `${title.textContent} duration elapsed`);
+        durationTrack.setAttribute('aria-valuemin', '0');
+        durationTrack.setAttribute('aria-valuemax', '100');
+        durationTrack.setAttribute('aria-valuenow', String(Math.round(durationPercent)));
+        const durationFill = document.createElement('div');
+        durationFill.className = 'h-full rounded-full bg-[#76a87b]';
+        durationFill.style.width = `${durationPercent}%`;
+        durationTrack.append(durationFill);
+        const durationProgress = document.createElement('div');
+        durationProgress.className = 'mb-4';
+        durationProgress.append(durationHeading, durationTrack);
+
+        const progressSection = goal.category === 'weight' ? document.createElement('div') : null;
+        if (progressSection) {
             const remaining = document.createElement('p');
-            remaining.className = 'mb-0 mt-3 text-right text-[13px] font-semibold text-[#68756c]';
+            remaining.className = 'mb-0 mt-3 text-left text-[12px] leading-[1.5] font-semibold text-[#516c58]';
             remaining.textContent = progress.recorded > 0
                 ? `${formatNumber(Math.max(progress.value - target, 0))} ${units.weight} to go`
                 : 'Record a weight to see how many kg are left.';
             progressSection.append(remaining);
-        } else {
-            const percent = target > 0 ? Math.min((progress.value / target) * 100, 100) : 0;
-            const progressTrack = document.createElement('div');
-            progressTrack.className = 'mt-3 h-2 overflow-hidden rounded-full bg-[#E5E7EB]';
-            progressTrack.setAttribute('role', 'progressbar');
-            progressTrack.setAttribute('aria-label', `${title.textContent} progress`);
-            progressTrack.setAttribute('aria-valuemin', '0');
-            progressTrack.setAttribute('aria-valuemax', '100');
-            progressTrack.setAttribute('aria-valuenow', String(Math.round(percent)));
-            const progressFill = document.createElement('div');
-            progressFill.className = `h-full rounded-full ${goal.goal_done ? 'bg-[#3a7752]' : 'bg-[#76a87b]'}`;
-            progressFill.style.width = `${percent}%`;
-            progressTrack.append(progressFill);
-
-            const progressCaption = document.createElement('p');
-            progressCaption.className = 'mb-0 mt-2 text-right text-[11px] font-semibold text-[#68756c]';
-            progressCaption.textContent = `${formatNumber(percent)}%`;
-            progressSection.append(progressTrack, progressCaption);
         }
 
         const dates = document.createElement('p');
@@ -1455,8 +1521,10 @@
             topRow,
             value,
             ...(weightChart ? [weightChart] : []),
-            ...(stepsChart ? [stepsChart] : []),
-            progressSection,
+            ...(dailyTotalsChart ? [dailyTotalsChart] : []),
+            durationProgress,
+            ...(progressSection ? [progressSection] : []),
+            ...(stepsPlan ? [stepsPlan] : []),
             dates,
             footer
         );

@@ -15,6 +15,11 @@ in `health_db`, with an option to undo the latest save. Use **Edit entry**
 beside a recent measurement to correct its parameter, value, or date; edits can
 also be undone immediately after saving.
 
+Step entries show estimated calories burned. The estimate uses the closest
+dated weight entry and a step length of 0.415 times the user's height, with an
+energy estimate of 0.5 kcal per kilogram per kilometer. If the user has no
+weight entries, the estimate assumes BMI 22 to derive weight from height.
+
 ## Health dashboard
 
 After signing in, use **View your progress dashboard** to see all goals with
@@ -22,8 +27,13 @@ their current progress, completion status, date range, and number of entries
 recorded during each goal period. The dashboard also shows current BMI based
 on the user's height and latest recorded weight. Step progress uses the daily
 average across the elapsed date range through today (capped at the goal end
-date), counting days without an entry as zero and excluding future days.
-Multiple step entries on the same date are all included in that day's total.
+date), counting days without an entry as zero and excluding future days. Sleep
+goals use the same elapsed-day average calculation. Multiple step or sleep
+entries on the same date are included in that day's total.
+All goal cards show a date-based progress bar from the start date to the end
+date. Step goal cards also show the days until the goal ends and the daily step
+average needed over the remaining goal dates to reach the target average. Step
+and sleep cards include daily trend charts with their target averages.
 
 ## Health goals
 
@@ -36,12 +46,12 @@ was saved by mistake and return its details to the form for editing.
 Goals can be marked complete manually, or automatically when matching entries
 within the date range reach the target (`goal_done` is set to `1`). Weight goals
 compare individual readings (a reading at or below the target reaches the goal);
-the dashboard shows the latest weight reading in the period. Sleep and blood
-pressure use the sum of matching entries (blood pressure uses systolic values).
-Steps goals are achieved when the average daily steps over elapsed calendar days
-in the goal's date range (including days with no entry as zero, but excluding
-future days) meets or exceeds the target. Multiple step entries on a date are
-summed.
+the dashboard shows the latest weight reading in the period. Sleep goals are
+achieved when average sleep per day over elapsed calendar days in the goal's
+date range (including days with no entry as zero, but excluding future days)
+meets or exceeds the target. Steps use the same elapsed-day average calculation;
+multiple step entries on a date are summed. Blood pressure goals use the sum of
+matching entries (blood pressure uses systolic values).
 
 For an existing database that still has the old `date` column, migrate it and
 add `start_date` before using the updated goal form. If that database does not

@@ -49,9 +49,19 @@ try {
                 $savedGoal['goal'] = (float) $savedGoal['goal'];
                 $savedGoal['goal_done'] = (bool) ((int) $savedGoal['goal_done']);
                 $savedGoal['steps_average'] = $savedGoal['category'] === 'steps'
-                    ? averageStepsForGoal(
+                    ? averageDailyValueForGoal(
                         $pdo,
                         (int) $user['user_id'],
+                        'steps',
+                        $savedGoal['start_date'],
+                        $savedGoal['done_by_date']
+                    )
+                    : null;
+                $savedGoal['sleep_average'] = $savedGoal['category'] === 'sleep'
+                    ? averageDailyValueForGoal(
+                        $pdo,
+                        (int) $user['user_id'],
+                        'sleep',
                         $savedGoal['start_date'],
                         $savedGoal['done_by_date']
                     )
@@ -71,6 +81,12 @@ try {
             $statement->execute(['user_id' => (int) $user['user_id']]);
             $entries = $statement->fetchAll();
             $heightCm = is_numeric($user['length']) ? (float) $user['length'] : null;
+            $weightEntries = [];
+            foreach ($entries as $candidate) {
+                if ($candidate['category'] === 'weight') {
+                    $weightEntries[] = $candidate;
+                }
+            }
             foreach ($entries as &$entry) {
                 if ($entry['category'] === 'weight') {
                     $entry['bmi'] = is_numeric($entry['measurement']) && $heightCm !== null
@@ -79,6 +95,23 @@ try {
                             (int) $user['user_id'],
                             (float) $entry['measurement'],
                             $heightCm
+                        )
+                        : null;
+                } elseif ($entry['category'] === 'steps') {
+                    $stepCount = is_numeric($entry['measurement'])
+                        ? (float) $entry['measurement']
+                        : null;
+                    $entry['calories_burned'] = $stepCount !== null
+                        && $stepCount >= 0
+                        && floor($stepCount) === $stepCount
+                        && $heightCm !== null
+                        ? calculateCaloriesBurned(
+                            $pdo,
+                            (int) $user['user_id'],
+                            (string) $entry['date'],
+                            (int) $stepCount,
+                            $heightCm,
+                            $weightEntries
                         )
                         : null;
                 }
@@ -276,6 +309,13 @@ try {
         ];
         if ($category === 'weight') {
             $savedEntry['bmi'] = calculateBMI($pdo, $userId, (float) $measurement);
+        } elseif ($category === 'steps') {
+            $savedEntry['calories_burned'] = calculateCaloriesBurned(
+                $pdo,
+                $userId,
+                $savedDate,
+                (int) $measurement
+            );
         }
 
         respond($action === 'create_entry' ? 201 : 200, ['entry' => $savedEntry]);
@@ -530,9 +570,19 @@ try {
         ]);
         $goalDone = (bool) ((int) $doneStatement->fetchColumn());
         $stepsAverage = $category === 'steps'
-            ? averageStepsForGoal(
+            ? averageDailyValueForGoal(
                 $pdo,
                 (int) $_SESSION['user_id'],
+                'steps',
+                $startDateValue->format('Y-m-d'),
+                $doneByDateValue->format('Y-m-d')
+            )
+            : null;
+        $sleepAverage = $category === 'sleep'
+            ? averageDailyValueForGoal(
+                $pdo,
+                (int) $_SESSION['user_id'],
+                'sleep',
                 $startDateValue->format('Y-m-d'),
                 $doneByDateValue->format('Y-m-d')
             )
@@ -548,6 +598,7 @@ try {
                 'done_by_date' => $doneByDateValue->format('Y-m-d'),
                 'goal_done' => $goalDone,
                 'steps_average' => $stepsAverage,
+                'sleep_average' => $sleepAverage,
             ],
         ]);
     }
