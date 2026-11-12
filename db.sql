@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Isäntä: db
--- Luontiaika: 29.10.2026 klo 16:47
+-- Luontiaika: 12.11.2026 klo 15:06
 -- Palvelimen versio: 8.0.46
 -- PHP-versio 8.3.26
 
@@ -110,15 +110,20 @@ CREATE TABLE `users` (
   `name` tinytext NOT NULL,
   `last_name` tinytext NOT NULL,
   `username` varchar(50) NOT NULL,
-  `password_hash` varchar(255) NOT NULL
+  `password_hash` varchar(255) NOT NULL,
+  `birthday` date DEFAULT NULL,
+  `length` int DEFAULT NULL,
+  `sex` enum('male','female','other') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Vedos taulusta `users`
 --
 
-INSERT INTO `users` (`user_id`, `name`, `last_name`, `username`, `password_hash`) VALUES
-(3, 'Arttu', 'Tuhkanen', 'KoffiKissa', '$2y$10$DAmeX.4jLRAj/J6ipc0gqe4KFVYpY8rcRsW1kcs89HLMIc62j7fBm');
+INSERT INTO `users` (`user_id`, `name`, `last_name`, `username`, `password_hash`, `birthday`, `length`, `sex`) VALUES
+(3, 'Arttu', 'Tuhkanen', 'KoffiKissa', '$2y$10$DAmeX.4jLRAj/J6ipc0gqe4KFVYpY8rcRsW1kcs89HLMIc62j7fBm', '2001-11-01', 195, 'male'),
+(7, 'Kalle', 'Hakkarainen', 'Rolle37', '$2y$10$qvxjAVhW9IseXnCEJXeds.iieOdwjCNS/fn02S5WylaoRgyVEBV8G', '2000-05-11', 180, 'male'),
+(8, 'Kalle', 'Hakkarainen', 'OSRS_Noob', '$2y$10$EewlFMXE2BAmvJzCabYfluHivNq4PnjrAEIkthYS4GU9boQ9MmV/q', '2000-05-13', 180, 'male');
 
 --
 -- Indexes for dumped tables
@@ -197,7 +202,7 @@ ALTER TABLE `messages`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `user_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Rajoitteet vedostauluille
