@@ -22,11 +22,5 @@ garphify
     e. AI-viestit
 
 
- Painoon bmi
- - pituus
- - ikä
- - sukupuoli
-
  Kalorikulutus AI:lta
  
- Paino goal laskee yhteen eikä ota keskaria

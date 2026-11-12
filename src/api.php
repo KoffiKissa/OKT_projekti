@@ -69,7 +69,22 @@ try {
                  ORDER BY date DESC, id DESC'
             );
             $statement->execute(['user_id' => (int) $user['user_id']]);
-            respond(200, ['entries' => $statement->fetchAll()]);
+            $entries = $statement->fetchAll();
+            $heightCm = is_numeric($user['length']) ? (float) $user['length'] : null;
+            foreach ($entries as &$entry) {
+                if ($entry['category'] === 'weight') {
+                    $entry['bmi'] = is_numeric($entry['measurement']) && $heightCm !== null
+                        ? calculateBMI(
+                            $pdo,
+                            (int) $user['user_id'],
+                            (float) $entry['measurement'],
+                            $heightCm
+                        )
+                        : null;
+                }
+            }
+            unset($entry);
+            respond(200, ['entries' => $entries]);
         }
 
         respond(200, ['user' => publicUser($user)]);
@@ -253,14 +268,17 @@ try {
             completeGoalsReachedByEntries($pdo, $userId, $affectedCategory);
         }
 
-        respond($action === 'create_entry' ? 201 : 200, [
-            'entry' => [
-                'id' => $entryId,
-                'category' => $category,
-                'measurement' => $measurement,
-                'date' => $savedDate,
-            ],
-        ]);
+        $savedEntry = [
+            'id' => $entryId,
+            'category' => $category,
+            'measurement' => $measurement,
+            'date' => $savedDate,
+        ];
+        if ($category === 'weight') {
+            $savedEntry['bmi'] = calculateBMI($pdo, $userId, (float) $measurement);
+        }
+
+        respond($action === 'create_entry' ? 201 : 200, ['entry' => $savedEntry]);
     }
 
     $goalActions = ['create_goal', 'update_goal', 'delete_goal', 'mark_goal_done', 'mark_goal_not_done'];

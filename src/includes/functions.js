@@ -260,9 +260,16 @@
 
     function addEntryToList(entry) {
         const item = document.createElement('li');
-        item.className = Number(entry.id) === editingEntryId
-            ? 'flex items-start justify-between gap-3 rounded-lg border border-[#3a7752] bg-white p-6 shadow-sm ring-2 ring-[#9fcba9]'
-            : 'flex items-start justify-between gap-3 rounded-lg border border-[#E5E7EB] bg-white p-6 shadow-sm transition hover:shadow-md';
+        const isWeightEntry = entry.category === 'weight';
+        const isEditing = Number(entry.id) === editingEntryId;
+        item.className = isWeightEntry
+            ? `grid items-center gap-3 rounded-lg border ${isEditing ? 'border-[#3a7752] ring-2 ring-[#9fcba9]' : 'border-[#E5E7EB] transition hover:shadow-md'} bg-white p-6 shadow-sm`
+            : isEditing
+                ? 'flex items-start justify-between gap-3 rounded-lg border border-[#3a7752] bg-white p-6 shadow-sm ring-2 ring-[#9fcba9]'
+                : 'flex items-start justify-between gap-3 rounded-lg border border-[#E5E7EB] bg-white p-6 shadow-sm transition hover:shadow-md';
+        if (isWeightEntry) {
+            item.style.gridTemplateColumns = 'minmax(0, 1fr) auto minmax(0, 1fr)';
+        }
         const details = document.createElement('div');
         details.className = 'min-w-0';
         const title = document.createElement('strong');
@@ -271,6 +278,19 @@
         const value = document.createElement('p');
         value.className = 'm-0 text-[13px] leading-[1.5] text-[#68756c]';
         value.textContent = formatMeasurement(entry);
+        const bmi = isWeightEntry ? document.createElement('div') : null;
+        if (bmi) {
+            bmi.className = 'self-start text-center';
+            const bmiLabel = document.createElement('strong');
+            bmiLabel.className = 'mb-[5px] block text-sm font-bold text-[#26372d]';
+            bmiLabel.textContent = 'BMI';
+            const bmiValue = document.createElement('p');
+            bmiValue.className = 'm-0 text-[13px] leading-[1.5] text-[#68756c]';
+            bmiValue.textContent = entry.bmi === null || entry.bmi === undefined
+                ? 'Not available'
+                : Number(entry.bmi).toFixed(1);
+            bmi.append(bmiLabel, bmiValue);
+        }
         const date = document.createElement('time');
         date.className = 'mt-[5px] block text-[13px] leading-[1.5] text-[#68756c]';
         date.dateTime = entry.date;
@@ -279,9 +299,12 @@
         editButton.className = 'min-h-[38px] shrink-0 cursor-pointer rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-2 text-[13px] font-bold text-[#26372d] hover:bg-[#f4f6f1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#9fcba9] focus-visible:outline-offset-[3px]';
         editButton.type = 'button';
         editButton.textContent = 'Edit entry';
+        if (isWeightEntry) {
+            editButton.style.justifySelf = 'end';
+        }
         editButton.addEventListener('click', () => startEditingEntry(entry));
         details.append(title, value, date);
-        item.append(details, editButton);
+        item.append(details, ...(bmi ? [bmi] : []), editButton);
         return item;
     }
 
@@ -1191,6 +1214,160 @@
         return figure;
     }
 
+    function renderStepsChart(goal, entries, today) {
+        const isActiveGoal = !goal.goal_done
+            && goal.start_date <= today
+            && goal.done_by_date >= today;
+        const startDate = isActiveGoal ? goal.start_date : shiftDateByMonth(today, -1);
+        const endDate = isActiveGoal ? goal.done_by_date : today;
+        const dailyTotals = new Map();
+        entries
+            .filter((entry) => entry.category === 'steps'
+                && entry.date >= startDate
+                && entry.date <= endDate
+                && entry.date <= today)
+            .forEach((entry) => {
+                const value = parseEntryValue(entry);
+                if (value !== null) {
+                    dailyTotals.set(entry.date, (dailyTotals.get(entry.date) || 0) + value);
+                }
+            });
+        const measurements = [...dailyTotals.entries()]
+            .map(([date, value]) => ({ date, value }))
+            .sort((first, second) => first.date.localeCompare(second.date));
+        const target = Number(goal.goal);
+        const chartTop = 12;
+        const chartBottom = 104;
+        const chartLeft = 34;
+        const chartRight = 306;
+        const startTime = new Date(`${startDate}T00:00:00Z`).getTime();
+        const endTime = new Date(`${endDate}T00:00:00Z`).getTime();
+        const chartMax = measurements.reduce(
+            (maximum, entry) => Math.max(maximum, entry.value),
+            target
+        ) * 1.1;
+        const xForDate = (date) => endTime === startTime
+            ? (chartLeft + chartRight) / 2
+            : chartLeft + ((new Date(`${date}T00:00:00Z`).getTime() - startTime) / (endTime - startTime))
+                * (chartRight - chartLeft);
+        const yForValue = (value) => chartBottom
+            - (value / chartMax) * (chartBottom - chartTop);
+
+        const figure = document.createElement('figure');
+        figure.className = 'mb-0 mt-5 rounded-lg bg-[#F9FAFB] p-4';
+        const heading = document.createElement('figcaption');
+        heading.className = 'mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-[#26372d]';
+        const headingLabel = document.createElement('span');
+        headingLabel.textContent = 'Daily steps trend';
+        const dateRange = document.createElement('span');
+        dateRange.className = 'text-right text-[10px] font-normal text-[#68756c]';
+        dateRange.textContent = isActiveGoal ? 'Active goal period' : 'Last month';
+        heading.append(headingLabel, dateRange);
+
+        const chart = svgElement('svg', {
+            viewBox: '0 0 320 122',
+            class: 'h-32 w-full overflow-visible',
+            role: 'img',
+            'aria-label': `Daily steps from ${startDate} to ${endDate}. Goal: ${formatNumber(target)} steps per day.`
+        });
+        [chartTop, (chartTop + chartBottom) / 2, chartBottom].forEach((y) => {
+            chart.append(svgElement('line', {
+                x1: chartLeft,
+                y1: y,
+                x2: chartRight,
+                y2: y,
+                stroke: '#E5E7EB',
+                'stroke-width': 1
+            }));
+        });
+        const goalY = yForValue(target);
+        chart.append(svgElement('line', {
+            x1: chartLeft,
+            y1: goalY,
+            x2: chartRight,
+            y2: goalY,
+            stroke: '#16A34A',
+            'stroke-width': 1.5,
+            'stroke-dasharray': '4 4'
+        }));
+
+        const points = measurements.map((entry) => ({
+            ...entry,
+            x: xForDate(entry.date),
+            y: yForValue(entry.value)
+        }));
+        for (let index = 1; index < points.length; index += 1) {
+            const previous = points[index - 1];
+            const current = points[index];
+            chart.append(svgElement('line', {
+                x1: previous.x,
+                y1: previous.y,
+                x2: current.x,
+                y2: current.y,
+                stroke: '#64748B',
+                'stroke-width': 3,
+                'stroke-linecap': 'round'
+            }));
+        }
+        points.forEach((point) => {
+            const marker = svgElement('circle', {
+                cx: point.x,
+                cy: point.y,
+                r: 4,
+                fill: '#64748B',
+                stroke: '#FFFFFF',
+                'stroke-width': 2
+            });
+            const tooltip = svgElement('title');
+            tooltip.textContent = `${point.date}: ${formatNumber(point.value)} steps`;
+            marker.append(tooltip);
+            chart.append(marker);
+        });
+
+        const goalLabel = document.createElement('p');
+        goalLabel.className = 'mb-0 mt-1 text-[10px] font-semibold text-[#15803D]';
+        goalLabel.textContent = `Daily goal · ${formatNumber(target)} steps`;
+
+        const legend = document.createElement('div');
+        legend.className = 'mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-[#68756c]';
+        [
+            { color: '#64748B', label: 'Daily steps', isLine: false },
+            { color: '#16A34A', label: 'Daily goal', isLine: true }
+        ].forEach(({ color, label, isLine }) => {
+            const item = document.createElement('span');
+            item.className = 'inline-flex items-center gap-1';
+            const marker = document.createElement('span');
+            marker.className = isLine ? 'h-0 w-3 border-t-2 border-dashed' : 'h-2 w-2 rounded-full';
+            if (isLine) {
+                marker.style.borderTopColor = color;
+            } else {
+                marker.style.backgroundColor = color;
+            }
+            marker.setAttribute('aria-hidden', 'true');
+            item.append(marker, document.createTextNode(label));
+            legend.append(item);
+        });
+
+        const dateLabels = document.createElement('div');
+        dateLabels.className = 'mt-1 flex justify-between text-[10px] text-[#68756c]';
+        const startLabel = document.createElement('time');
+        startLabel.dateTime = startDate;
+        startLabel.textContent = startDate;
+        const endLabel = document.createElement('time');
+        endLabel.dateTime = endDate;
+        endLabel.textContent = endDate;
+        dateLabels.append(startLabel, endLabel);
+
+        figure.append(heading, chart, goalLabel, legend, dateLabels);
+        if (measurements.length === 0) {
+            const emptyChartMessage = document.createElement('p');
+            emptyChartMessage.className = 'mb-0 mt-2 text-[11px] text-[#68756c]';
+            emptyChartMessage.textContent = 'No step entries recorded during this period yet.';
+            figure.append(emptyChartMessage);
+        }
+        return figure;
+    }
+
     function renderGoal(goal, entries, today) {
         const progress = calculateProgress(goal, entries, today);
         const target = Number(goal.goal);
@@ -1226,6 +1403,9 @@
 
         const weightChart = goal.category === 'weight'
             ? renderWeightChart(goal, entries, today)
+            : null;
+        const stepsChart = goal.category === 'steps'
+            ? renderStepsChart(goal, entries, today)
             : null;
 
         const progressSection = document.createElement('div');
@@ -1275,6 +1455,7 @@
             topRow,
             value,
             ...(weightChart ? [weightChart] : []),
+            ...(stepsChart ? [stepsChart] : []),
             progressSection,
             dates,
             footer

@@ -29,7 +29,7 @@ function connectToDatabase(): PDO
 function findUser(PDO $pdo, string $column, string|int $value): ?array
 {
     $statement = $pdo->prepare(
-        "SELECT user_id, name, last_name, username, password_hash FROM users WHERE {$column} = :value LIMIT 1"
+        "SELECT user_id, name, last_name, username, password_hash, length FROM users WHERE {$column} = :value LIMIT 1"
     );
     $statement->execute(['value' => $value]);
     $user = $statement->fetch();
@@ -186,39 +186,50 @@ function completeGoalsReachedByEntries(PDO $pdo, int $userId, string $category):
     }
 }
 
-function calculateBMI(PDO $pdo, int $userId): ?float
+function calculateBMI(PDO $pdo, int $userId, ?float $weightKg = null, ?float $heightCm = null): ?float
 {
-    $statement = $pdo->prepare(
-        'SELECT users.length, health_markers.measurement
-         FROM users
-         LEFT JOIN health_markers
-           ON health_markers.user_id = users.user_id
-          AND health_markers.category = :category
-         WHERE users.user_id = :user_id
-         ORDER BY health_markers.id DESC
-         LIMIT 1'
-    );
-    $statement->execute([
-        'category' => 'weight',
-        'user_id' => $userId,
-    ]);
-    $measurement = $statement->fetch();
+    if ($weightKg === null) {
+        $statement = $pdo->prepare(
+            'SELECT users.length, health_markers.measurement
+             FROM users
+             LEFT JOIN health_markers
+               ON health_markers.user_id = users.user_id
+              AND health_markers.category = :category
+             WHERE users.user_id = :user_id
+             ORDER BY health_markers.id DESC
+             LIMIT 1'
+        );
+        $statement->execute([
+            'category' => 'weight',
+            'user_id' => $userId,
+        ]);
+        $measurement = $statement->fetch();
+        if ($measurement === false || !is_numeric($measurement['measurement'])) {
+            return null;
+        }
 
-    if (
-        $measurement === false
-        || $measurement['length'] === null
-        || $measurement['measurement'] === null
-        || !is_numeric($measurement['length'])
-        || !is_numeric($measurement['measurement'])
-    ) {
+        $weightKg = (float) $measurement['measurement'];
+        if ($heightCm === null) {
+            if (!is_numeric($measurement['length'])) {
+                return null;
+            }
+            $heightCm = (float) $measurement['length'];
+        }
+    } elseif ($heightCm === null) {
+        $statement = $pdo->prepare('SELECT length FROM users WHERE user_id = :user_id');
+        $statement->execute(['user_id' => $userId]);
+        $savedHeight = $statement->fetchColumn();
+        if (!is_numeric($savedHeight)) {
+            return null;
+        }
+        $heightCm = (float) $savedHeight;
+    }
+
+    if ($weightKg <= 0 || $heightCm <= 0 || !is_finite($weightKg) || !is_finite($heightCm)) {
         return null;
     }
 
-    $heightMeters = (float) $measurement['length'] / 100;
-    $weightKg = (float) $measurement['measurement'];
-    if ($heightMeters <= 0 || $weightKg <= 0 || !is_finite($heightMeters) || !is_finite($weightKg)) {
-        return null;
-    }
+    $heightMeters = $heightCm / 100;
 
     return round($weightKg / ($heightMeters ** 2), 1);
 }
