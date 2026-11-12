@@ -21,14 +21,12 @@ garphify
     d.	Saavutukset
     e. AI-viestit
 
-Ehottomasti ne include headerit eli navit ja footerit!! on hirvee setti nyt
- Tailwind Components
 
  Painoon bmi
  - pituus
  - ikä
  - sukupuoli
 
- Kalorikulutus AIlta
+ Kalorikulutus AI:lta
  
  Paino goal laskee yhteen eikä ota keskaria

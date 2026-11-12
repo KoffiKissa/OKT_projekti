@@ -40,6 +40,25 @@ include __DIR__ . '/includes/navigation.php';
                        maxlength="50" required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
             <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="birthday">Birthday</label>
+                <input id="birthday" name="birthday" type="date" autocomplete="bday"
+                       required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
+            </div>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="length">Length (cm)</label>
+                <input id="length" name="length" type="number" min="1" step="1" inputmode="numeric"
+                       required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
+            </div>
+            <div class="mb-[18px]">
+                <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="sex">Sex</label>
+                <select id="sex" name="sex" required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
+                    <option value="" selected disabled>Choose an option</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="mb-[18px]">
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="new-username">Username</label>
                 <input id="new-username" name="username" type="text" autocomplete="username"
                        minlength="3" maxlength="50" pattern="[A-Za-z0-9._-]+" required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
@@ -82,8 +101,9 @@ include __DIR__ . '/includes/navigation.php';
             userDetails.textContent = `${user.name} ${user.last_name} (@${user.username})`;
             welcome.hidden = false;
             form.hidden = true;
+            registerForm.hidden = true;
             message.hidden = true;
-            window.setSiteNavigationVisible(true);
+            window.setSiteNavigationVisible(true, user.username);
         }
 
         function showError(text) {
@@ -107,7 +127,7 @@ include __DIR__ . '/includes/navigation.php';
             form.querySelectorAll('input').forEach((input) => {
                 input.disabled = !isLogin;
             });
-            registerForm.querySelectorAll('input').forEach((input) => {
+            registerForm.querySelectorAll('input, select').forEach((input) => {
                 input.disabled = isLogin;
             });
             pageTitle.textContent = isLogin ? 'Welcome back' : 'Create your account';

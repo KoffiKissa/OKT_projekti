@@ -576,6 +576,9 @@ try {
     } elseif ($action === 'register') {
         $name = $credentials['name'] ?? null;
         $lastName = $credentials['last_name'] ?? null;
+        $birthday = $credentials['birthday'] ?? null;
+        $length = $credentials['length'] ?? null;
+        $sex = $credentials['sex'] ?? null;
         $passwordConfirmation = $credentials['password_confirmation'] ?? null;
 
         if (
@@ -587,6 +590,23 @@ try {
             || characterLength(trim($lastName)) > 50
         ) {
             respond(400, ['error' => 'Enter a first and last name, each 50 characters or fewer.']);
+        }
+
+        if (
+            !is_string($birthday)
+            || ($birthdayValue = DateTimeImmutable::createFromFormat('!Y-m-d', $birthday)) === false
+            || $birthdayValue->format('Y-m-d') !== $birthday
+            || $birthdayValue > new DateTimeImmutable('today')
+        ) {
+            respond(400, ['error' => 'Enter a valid birthday that is not in the future.']);
+        }
+
+        if (!is_string($length) || !preg_match('/\A[1-9]\d{0,9}\z/', $length) || (int) $length > 2147483647) {
+            respond(400, ['error' => 'Length must be a positive whole number of centimeters.']);
+        }
+
+        if (!is_string($sex) || !in_array($sex, ['male', 'female', 'other'], true)) {
+            respond(400, ['error' => 'Choose a valid sex option.']);
         }
 
         if (!is_string($username) || !preg_match('/\A[A-Za-z0-9._-]{3,50}\z/', $username)) {
@@ -688,12 +708,15 @@ try {
 
     if ($action === 'register') {
         $statement = $pdo->prepare(
-            'INSERT INTO users (name, last_name, username, password_hash)
-             VALUES (:name, :last_name, :username, :password_hash)'
+            'INSERT INTO users (name, last_name, birthday, length, sex, username, password_hash)
+             VALUES (:name, :last_name, :birthday, :length, :sex, :username, :password_hash)'
         );
         $statement->execute([
             'name' => trim($name),
             'last_name' => trim($lastName),
+            'birthday' => $birthday,
+            'length' => (int) $length,
+            'sex' => $sex,
             'username' => $username,
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
         ]);
