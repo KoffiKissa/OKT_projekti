@@ -91,5 +91,70 @@ Ollama must be running on the same host as Docker and reachable from the PHP
 container. On Windows, Ollama may need to listen on an interface accessible to
 Docker rather than only `127.0.0.1`; if changing its bind address, restrict
 access with Windows Firewall and do not expose the Ollama port to public
-networks. Chat history stays in the browser session and is not saved to the
-application database.
+networks. Each account has one persistent chat thread. Every message in that
+thread shares its `chat_id`; `message_id` identifies an individual message.
+The user's sender is their `user_id`, and the assistant's sender is the
+configured Ollama model (default `qwen3.5:4b`). The `date` column is a
+`DATETIME` populated when each message is saved. Existing date-only values
+become midnight during migration because their original times were not stored.
+
+For an existing database, run this migration once. It preserves messages whose
+numeric user senders can be matched to the `users` table and associates bot
+replies with the nearest preceding user message. It stops at the `NOT NULL`
+change if any legacy messages cannot be safely assigned to an account; resolve
+those rows before continuing.
+
+```sql
+CREATE TABLE chats (
+    chat_id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (chat_id),
+    UNIQUE KEY user_id (user_id),
+    CONSTRAINT fk_chat_user FOREIGN KEY (user_id) REFERENCES users (user_id)
+);
+
+INSERT INTO chats (user_id)
+SELECT DISTINCT users.user_id
+FROM users
+JOIN messages ON messages.sender = CAST(users.user_id AS CHAR);
+
+ALTER TABLE messages MODIFY COLUMN chat_id INT NOT NULL;
+ALTER TABLE messages CHANGE COLUMN chat_id message_id INT NOT NULL;
+ALTER TABLE messages MODIFY COLUMN message_id INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE messages
+    ADD COLUMN chat_id INT NULL AFTER message_id,
+    MODIFY COLUMN message VARCHAR(1000) NOT NULL,
+    MODIFY COLUMN sender VARCHAR(100) NOT NULL,
+    MODIFY COLUMN `date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+CREATE TEMPORARY TABLE legacy_message_owners (
+    message_id INT NOT NULL PRIMARY KEY,
+    user_id INT NULL
+);
+
+INSERT INTO legacy_message_owners (message_id, user_id)
+SELECT messages.message_id,
+       (
+           SELECT users.user_id
+           FROM messages AS preceding
+           JOIN users ON preceding.sender = CAST(users.user_id AS CHAR)
+           WHERE preceding.message_id <= messages.message_id
+           ORDER BY preceding.message_id DESC
+           LIMIT 1
+       )
+FROM messages;
+
+UPDATE messages
+JOIN legacy_message_owners ON legacy_message_owners.message_id = messages.message_id
+JOIN chats ON chats.user_id = legacy_message_owners.user_id
+SET messages.chat_id = chats.chat_id;
+
+ALTER TABLE messages
+    MODIFY COLUMN chat_id INT NOT NULL,
+    ADD KEY fk_messages_chat (chat_id),
+    ADD CONSTRAINT fk_messages_chat FOREIGN KEY (chat_id) REFERENCES chats (chat_id);
+
+DROP TEMPORARY TABLE legacy_message_owners;
+```

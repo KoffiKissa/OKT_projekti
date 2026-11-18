@@ -19,7 +19,18 @@ if ($method !== 'GET' && $method !== 'POST') {
     respond(405, ['error' => 'Method not allowed.']);
 }
 
-function getOllamaReply(array $messages): string
+function getOllamaModel(): string
+{
+    $model = getenv('OLLAMA_MODEL') ?: 'qwen3.5:4b';
+    if (!preg_match('/\A[A-Za-z0-9._:-]{1,100}\z/', $model)) {
+        error_log('Invalid OLLAMA_MODEL configuration.');
+        respond(500, ['error' => 'The local AI model is not configured correctly.']);
+    }
+
+    return $model;
+}
+
+function getOllamaReply(array $messages, string $model): string
 {
     $baseUrl = getenv('OLLAMA_BASE_URL') ?: 'http://host.docker.internal:11434';
     $urlParts = parse_url($baseUrl);
@@ -35,12 +46,6 @@ function getOllamaReply(array $messages): string
     ) {
         error_log('Invalid OLLAMA_BASE_URL configuration.');
         respond(500, ['error' => 'The local AI connection is not configured correctly.']);
-    }
-
-    $model = getenv('OLLAMA_MODEL') ?: 'qwen3.5:4b';
-    if (!preg_match('/\A[A-Za-z0-9._:-]{1,100}\z/', $model)) {
-        error_log('Invalid OLLAMA_MODEL configuration.');
-        respond(500, ['error' => 'The local AI model is not configured correctly.']);
     }
 
     $requestBody = json_encode([
@@ -106,7 +111,13 @@ function getOllamaReply(array $messages): string
         respond(502, ['error' => 'Ollama returned an empty reply. Please try again.']);
     }
 
-    return trim($reply);
+    $reply = trim($reply);
+    if (characterLength($reply) > 1000) {
+        error_log('Ollama returned a message longer than the database limit.');
+        respond(502, ['error' => 'Ollama returned a reply that is too long. Please try again.']);
+    }
+
+    return $reply;
 }
 
 try {
@@ -120,6 +131,37 @@ try {
         if ($user === null) {
             unset($_SESSION['user_id']);
             respond(401, ['error' => 'Please sign in.']);
+        }
+
+        if (($_GET['resource'] ?? '') === 'chat_history') {
+            $chatStatement = $pdo->prepare(
+                'SELECT chat_id FROM chats WHERE user_id = :user_id LIMIT 1'
+            );
+            $chatStatement->execute(['user_id' => (int) $user['user_id']]);
+            $chatId = $chatStatement->fetchColumn();
+            if ($chatId === false) {
+                respond(200, ['chat_id' => null, 'messages' => []]);
+            }
+
+            $messageStatement = $pdo->prepare(
+                'SELECT message, sender, UNIX_TIMESTAMP(`date`) AS message_timestamp
+                 FROM messages
+                 WHERE chat_id = :chat_id
+                 ORDER BY message_id ASC'
+            );
+            $messageStatement->execute(['chat_id' => (int) $chatId]);
+            $history = [];
+            foreach ($messageStatement->fetchAll() as $savedMessage) {
+                $history[] = [
+                    'role' => (string) $savedMessage['sender'] === (string) $user['user_id']
+                        ? 'user'
+                        : 'assistant',
+                    'content' => $savedMessage['message'],
+                    'timestamp' => (int) $savedMessage['message_timestamp'],
+                ];
+            }
+
+            respond(200, ['chat_id' => (int) $chatId, 'messages' => $history]);
         }
 
         if (($_GET['resource'] ?? '') === 'bmi') {
@@ -258,6 +300,11 @@ try {
             respond(401, ['error' => 'Please sign in to use the chat.']);
         }
 
+        $requestedChatId = $credentials['chat_id'] ?? null;
+        if ($requestedChatId !== null && (!is_int($requestedChatId) || $requestedChatId < 1)) {
+            respond(400, ['error' => 'A valid chat ID is required.']);
+        }
+
         $messages = $credentials['messages'] ?? null;
         if (!is_array($messages) || !array_is_list($messages) || count($messages) < 1 || count($messages) > 12) {
             respond(400, ['error' => 'Send between 1 and 12 chat messages.']);
@@ -286,7 +333,86 @@ try {
             respond(400, ['error' => 'The latest chat message must be from you.']);
         }
 
-        respond(200, ['reply' => getOllamaReply($validatedMessages)]);
+        $userId = (int) $_SESSION['user_id'];
+        $pdo = connectToDatabase();
+        if ($requestedChatId !== null) {
+            $chatStatement = $pdo->prepare(
+                'SELECT chat_id FROM chats WHERE chat_id = :chat_id AND user_id = :user_id'
+            );
+            $chatStatement->execute([
+                'chat_id' => $requestedChatId,
+                'user_id' => $userId,
+            ]);
+            if ($chatStatement->fetchColumn() === false) {
+                respond(404, ['error' => 'Chat not found.']);
+            }
+        }
+
+        $model = getOllamaModel();
+        $reply = getOllamaReply($validatedMessages, $model);
+
+        try {
+            $pdo->beginTransaction();
+            if ($requestedChatId === null) {
+                $chatStatement = $pdo->prepare(
+                    'INSERT INTO chats (user_id)
+                     VALUES (:user_id)
+                     ON DUPLICATE KEY UPDATE chat_id = LAST_INSERT_ID(chat_id)'
+                );
+                $chatStatement->execute(['user_id' => $userId]);
+                $chatId = (int) $pdo->lastInsertId();
+            } else {
+                $chatId = $requestedChatId;
+            }
+
+            $statement = $pdo->prepare(
+                'INSERT INTO messages (chat_id, message, sender, `date`)
+                 VALUES (:chat_id, :message, :sender, CURRENT_TIMESTAMP)'
+            );
+            $statement->execute([
+                'chat_id' => $chatId,
+                'message' => $validatedMessages[count($validatedMessages) - 1]['content'],
+                'sender' => (string) $userId,
+            ]);
+            $userMessageId = (int) $pdo->lastInsertId();
+            $statement->execute([
+                'chat_id' => $chatId,
+                'message' => $reply,
+                'sender' => $model,
+            ]);
+            $assistantMessageId = (int) $pdo->lastInsertId();
+
+            $timestampStatement = $pdo->prepare(
+                'SELECT UNIX_TIMESTAMP(`date`) FROM messages WHERE message_id = :message_id'
+            );
+            $timestampStatement->execute(['message_id' => $userMessageId]);
+            $userTimestamp = $timestampStatement->fetchColumn();
+            $timestampStatement->execute(['message_id' => $assistantMessageId]);
+            $assistantTimestamp = $timestampStatement->fetchColumn();
+            if ($userTimestamp === false || $assistantTimestamp === false) {
+                throw new RuntimeException('Saved chat timestamps could not be retrieved.');
+            }
+
+            $chatStatement = $pdo->prepare(
+                'UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE chat_id = :chat_id'
+            );
+            $chatStatement->execute(['chat_id' => $chatId]);
+            $pdo->commit();
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
+
+        respond(200, [
+            'reply' => $reply,
+            'chat_id' => $chatId,
+            'timestamps' => [
+                'user' => (int) $userTimestamp,
+                'assistant' => (int) $assistantTimestamp,
+            ],
+        ]);
     }
 
     if ($action === 'delete_entry') {
@@ -763,6 +889,6 @@ try {
         respond(409, ['error' => 'That username is already taken. Please choose another.']);
     }
 
-    error_log('Login API database error: ' . $exception->getMessage());
+    error_log('API database error: ' . $exception->getMessage());
     respond(500, ['error' => 'The service is temporarily unavailable. Please try again later.']);
 }

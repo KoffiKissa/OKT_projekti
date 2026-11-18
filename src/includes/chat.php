@@ -70,6 +70,8 @@
     const chatMessages = document.getElementById('ai-chat-messages');
     const chatScrollArea = document.getElementById('ai-chat-scroll-area');
     const chatError = document.getElementById('ai-chat-error');
+    let chatId = null;
+    chatSendButton.disabled = true;
     let conversation = [{
         role: 'assistant',
         content: 'Hi there! I’m here to help you reflect on your health goals and progress. What would you like to focus on today?'
@@ -84,7 +86,24 @@
         (isOpen ? chatCloseButton : chatLauncher).focus();
     };
 
-    const appendMessage = (role, content) => {
+    const formatTimestamp = (timestamp) => {
+        const date = new Date(timestamp * 1000);
+        if (Number.isNaN(date.getTime())) {
+            throw new Error('The chat service returned an invalid timestamp.');
+        }
+
+        const now = new Date();
+        const isToday = date.getFullYear() === now.getFullYear()
+            && date.getMonth() === now.getMonth()
+            && date.getDate() === now.getDate();
+        const options = isToday
+            ? { hour: '2-digit', minute: '2-digit' }
+            : { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+
+        return { date, label: new Intl.DateTimeFormat(undefined, options).format(date) };
+    };
+
+    const appendMessage = (role, content, timestamp = null) => {
         const row = document.createElement('div');
         row.dataset.chatRole = role;
         row.className = role === 'user'
@@ -98,14 +117,91 @@
             row.append(avatar);
         }
 
+        const messageContent = document.createElement('div');
+        messageContent.className = role === 'user'
+            ? 'flex max-w-[85%] flex-col items-end'
+            : 'flex max-w-[85%] flex-col items-start';
+
         const bubble = document.createElement('div');
-        bubble.className = role === 'user'
-            ? 'max-w-[85%] rounded-2xl rounded-tr-md bg-[#28603e] px-4 py-3 text-[13px] leading-[1.6] text-white'
-            : 'max-w-[85%] rounded-2xl rounded-tl-md bg-white px-4 py-3 text-[13px] leading-[1.6] text-[#26372d] shadow-sm';
+        bubble.className = `max-w-full rounded-2xl px-4 py-3 text-[13px] font-sans font-normal leading-[1.6] ${
+            role === 'user'
+                ? 'rounded-tr-md bg-[#28603e] text-white'
+                : 'rounded-tl-md bg-white text-[#26372d] shadow-sm'
+        }`;
         bubble.textContent = content;
-        row.append(bubble);
+        messageContent.append(bubble);
+
+        const time = document.createElement('time');
+        time.className = `mt-1 text-[10px] font-sans font-normal text-[#526157] ${
+            role === 'user' ? 'mr-1' : 'ml-1'
+        }`;
+        const setTimestamp = (value) => {
+            if (!Number.isInteger(value)) {
+                throw new Error('The chat service returned an invalid timestamp.');
+            }
+
+            const formatted = formatTimestamp(value);
+            time.dateTime = formatted.date.toISOString();
+            time.textContent = formatted.label;
+        };
+        if (timestamp !== null) {
+            setTimestamp(timestamp);
+        }
+        messageContent.append(time);
+        row.append(messageContent);
         chatMessages.append(row);
         chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+
+        return { setTimestamp };
+    };
+
+    const loadChatHistory = async () => {
+        try {
+            const response = await fetch('api.php?resource=chat_history', {
+                signal: AbortSignal.timeout(15000)
+            });
+            let data;
+            try {
+                data = await response.json();
+            } catch {
+                throw new Error('The chat history service returned an invalid response.');
+            }
+            if (!data || typeof data !== 'object') {
+                throw new Error('The chat history service returned an invalid response.');
+            }
+            if (!response.ok) {
+                throw new Error(data.error || 'Unable to load your chat history.');
+            }
+            if (
+                !data
+                || typeof data !== 'object'
+                || (data.chat_id !== null && (!Number.isInteger(data.chat_id) || data.chat_id < 1))
+                || !Array.isArray(data.messages)
+                || data.messages.some(message =>
+                    !message
+                    || !['user', 'assistant'].includes(message.role)
+                    || typeof message.content !== 'string'
+                    || !Number.isInteger(message.timestamp)
+                )
+            ) {
+                throw new Error('The chat history service returned an invalid response.');
+            }
+
+            chatId = data.chat_id;
+            if (data.messages.length > 0) {
+                conversation = data.messages.map(({ role, content }) => ({ role, content }));
+                chatMessages.replaceChildren();
+                data.messages.forEach(({ role, content, timestamp }) => {
+                    appendMessage(role, content, timestamp);
+                });
+            }
+            chatSendButton.disabled = false;
+        } catch (error) {
+            chatError.textContent = error.name === 'TimeoutError'
+                ? 'Loading chat history took too long. Please refresh the page.'
+                : error.message || 'Unable to load your chat history. Please refresh the page.';
+            chatError.hidden = false;
+        }
     };
 
     chatLauncher.addEventListener('click', () => setChatOpen(true));
@@ -132,7 +228,7 @@
 
         chatError.hidden = true;
         chatError.textContent = '';
-        appendMessage('user', content);
+        const userMessage = appendMessage('user', content);
         chatInput.value = '';
         chatSendButton.disabled = true;
 
@@ -148,7 +244,7 @@
             const response = await fetch('api.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'chat', messages: requestMessages }),
+                body: JSON.stringify({ action: 'chat', chat_id: chatId, messages: requestMessages }),
                 signal: AbortSignal.timeout(120000)
             });
             let data;
@@ -166,9 +262,21 @@
             if (typeof data.reply !== 'string' || data.reply.trim() === '') {
                 throw new Error('Ollama returned an empty reply.');
             }
+            if (!Number.isInteger(data.chat_id) || data.chat_id < 1) {
+                throw new Error('The chat service returned an invalid chat ID.');
+            }
+            if (
+                !data.timestamps
+                || !Number.isInteger(data.timestamps.user)
+                || !Number.isInteger(data.timestamps.assistant)
+            ) {
+                throw new Error('The chat service returned invalid message timestamps.');
+            }
 
+            chatId = data.chat_id;
             conversation = [...requestMessages, { role: 'assistant', content: data.reply }];
-            appendMessage('assistant', data.reply);
+            userMessage.setTimestamp(data.timestamps.user);
+            appendMessage('assistant', data.reply, data.timestamps.assistant);
         } catch (error) {
             chatError.textContent = error.name === 'TimeoutError'
                 ? 'Ollama took too long to reply. Please try again.'
@@ -181,5 +289,7 @@
             chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
         }
     });
+
+    loadChatHistory();
 })();
 </script>

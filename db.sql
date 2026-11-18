@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Isäntä: db
--- Luontiaika: 12.11.2026 klo 15:06
+-- Luontiaika: 18.11.2026 klo 17:35
 -- Palvelimen versio: 8.0.46
 -- PHP-versio 8.3.26
 
@@ -51,6 +51,27 @@ CREATE TABLE `achievements_user` (
 -- --------------------------------------------------------
 
 --
+-- Rakenne taululle `chats`
+--
+
+CREATE TABLE `chats` (
+  `chat_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Vedos taulusta `chats`
+--
+
+INSERT INTO `chats` (`chat_id`, `user_id`, `created_at`, `updated_at`) VALUES
+(1, 3, '2026-11-18 17:15:26', '2026-11-18 17:34:19'),
+(3, 7, '2026-11-18 17:23:08', '2026-11-18 17:23:08');
+
+-- --------------------------------------------------------
+
+--
 -- Rakenne taululle `goals`
 --
 
@@ -86,6 +107,13 @@ CREATE TABLE `health_markers` (
   `date` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+--
+-- Vedos taulusta `health_markers`
+--
+
+INSERT INTO `health_markers` (`id`, `user_id`, `category`, `measurement`, `date`) VALUES
+(1, 3, 'steps', '10000', '2026-11-18');
+
 -- --------------------------------------------------------
 
 --
@@ -93,11 +121,30 @@ CREATE TABLE `health_markers` (
 --
 
 CREATE TABLE `messages` (
+  `message_id` int NOT NULL,
   `chat_id` int NOT NULL,
-  `message` varchar(255) NOT NULL,
-  `sender` enum('user','bot') NOT NULL,
-  `date` date NOT NULL
+  `message` varchar(1000) NOT NULL,
+  `sender` varchar(100) NOT NULL,
+  `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Vedos taulusta `messages`
+--
+
+INSERT INTO `messages` (`message_id`, `chat_id`, `message`, `sender`, `date`) VALUES
+(1, 1, 'hello!', '3', '2026-11-18 00:00:00'),
+(2, 1, 'Hello! It\'s so nice to meet you. 😊\n\nHow are you feeling right now? Is there anything specific on your mind, or maybe a small goal you\'d like to start working towards today? I\'m here to listen and offer some supportive ideas whenever you\'re ready.', 'qwen3.5:4b', '2026-11-18 00:00:00'),
+(5, 1, 'just testing the connection!', '3', '2026-11-18 17:21:45'),
+(6, 1, 'That\'s great to hear! 🎉\n\nI\'m glad we can connect. Whether it\'s just a friendly chat or something more specific about your wellness journey, I\'m here for you. What would you like to explore today?', 'qwen3.5:4b', '2026-11-18 17:21:45'),
+(7, 1, 'yes, it works. but now i am going to testif the chat history loads correctly, so wish me luck!!!', '3', '2026-11-18 17:22:47'),
+(8, 1, 'You\'ve got this! 🍀 Confidence is such a powerful tool for wellbeing. Take a deep breath and know that you\'re ready. I\'m right here with you if anything comes up during your \"test.\" Good luck! ✨', 'qwen3.5:4b', '2026-11-18 17:22:47'),
+(9, 3, 'hello', '7', '2026-11-18 17:23:08'),
+(10, 3, 'Hello! 👋 Welcome. How are you feeling today? Is there anything specific on your mind, or perhaps a small goal we can explore together?', 'qwen3.5:4b', '2026-11-18 17:23:08'),
+(11, 1, 'Hell yes, it works or at least it seems to function correctly', '3', '2026-11-18 17:23:56'),
+(12, 1, 'That is fantastic news! 🎉 I\'m so happy to hear that everything is loading smoothly.\n\nIf you find any glitches or anything feels off while we chat, just let me know—I\'m always here to help you figure things out together. How does the connection feel now? Does it seem like a comfortable place to talk about your day? 😊', 'qwen3.5:4b', '2026-11-18 17:23:56'),
+(13, 1, 'Hey, I want to know how many calories a day I should aim to eat if I want to weigh 90kg in a years time. I am 180cm tall and weigh 110kg now and I walk everyday.', '3', '2026-11-18 17:34:19'),
+(14, 1, 'Whoa, that\'s a big goal! 🎯 Dropping from 110kg to 90kg in a year is absolutely doable and will make such a positive difference in how you feel and move.\n\nSince I don\'t have your age, gender, or specific activity details beyond walking, I can\'t give you an exact number, but here are some friendly starting points:\n\n*   **The General Rule:** A common estimate for maintaining weight is around **25–30 calories per kilogram** of body weight. For a 110kg person, that might be roughly **2,750–3,300 calories** on an active day.\n*   **To Lose Weight:** To create a gentle loss (about 0.5kg to 1kg per week), you usually aim for a daily deficit of around 500 calories. This might mean aiming for **2,200–2,600 calories** depending on your metabolism.\n\n**A friendly tip:** Since you\'re walking every day, that\'s already a wonderful habit! 🚶‍♂️✨ You might want to track your food for a few days using an app or journal to see', 'qwen3.5:4b', '2026-11-18 17:34:19');
 
 -- --------------------------------------------------------
 
@@ -144,6 +191,13 @@ ALTER TABLE `achievements_user`
   ADD KEY `fk_achievement` (`achievement_id`);
 
 --
+-- Indeksit taulukolle `chats`
+--
+ALTER TABLE `chats`
+  ADD PRIMARY KEY (`chat_id`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
+
+--
 -- Indeksit taulukolle `goals`
 --
 ALTER TABLE `goals`
@@ -161,7 +215,8 @@ ALTER TABLE `health_markers`
 -- Indeksit taulukolle `messages`
 --
 ALTER TABLE `messages`
-  ADD PRIMARY KEY (`chat_id`);
+  ADD PRIMARY KEY (`message_id`),
+  ADD KEY `fk_messages_chat` (`chat_id`);
 
 --
 -- Indeksit taulukolle `users`
@@ -181,6 +236,12 @@ ALTER TABLE `achievements`
   MODIFY `achievement_id` int NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `chats`
+--
+ALTER TABLE `chats`
+  MODIFY `chat_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT for table `goals`
 --
 ALTER TABLE `goals`
@@ -190,13 +251,13 @@ ALTER TABLE `goals`
 -- AUTO_INCREMENT for table `health_markers`
 --
 ALTER TABLE `health_markers`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `chat_id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `message_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -216,6 +277,12 @@ ALTER TABLE `achievements_user`
   ADD CONSTRAINT `fk_user3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
 
 --
+-- Rajoitteet taululle `chats`
+--
+ALTER TABLE `chats`
+  ADD CONSTRAINT `fk_chat_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
+
+--
 -- Rajoitteet taululle `goals`
 --
 ALTER TABLE `goals`
@@ -226,6 +293,12 @@ ALTER TABLE `goals`
 --
 ALTER TABLE `health_markers`
   ADD CONSTRAINT `fk_user2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
+
+--
+-- Rajoitteet taululle `messages`
+--
+ALTER TABLE `messages`
+  ADD CONSTRAINT `fk_messages_chat` FOREIGN KEY (`chat_id`) REFERENCES `chats` (`chat_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
