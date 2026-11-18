@@ -22,5 +22,3 @@ garphify
     e. AI-viestit
 
 
- Kalorikulutus AI:lta
- 

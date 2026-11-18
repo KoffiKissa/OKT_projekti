@@ -9,6 +9,8 @@ services:
       DB_NAME: health_db
       DB_USER: user
       DB_PASSWORD: pass
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:4b}
     volumes:
       - ./src:/var/www/html
     depends_on:

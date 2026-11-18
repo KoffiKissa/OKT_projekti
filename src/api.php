@@ -19,6 +19,96 @@ if ($method !== 'GET' && $method !== 'POST') {
     respond(405, ['error' => 'Method not allowed.']);
 }
 
+function getOllamaReply(array $messages): string
+{
+    $baseUrl = getenv('OLLAMA_BASE_URL') ?: 'http://host.docker.internal:11434';
+    $urlParts = parse_url($baseUrl);
+    if (
+        $urlParts === false
+        || !in_array($urlParts['scheme'] ?? '', ['http', 'https'], true)
+        || empty($urlParts['host'])
+        || isset($urlParts['user'])
+        || isset($urlParts['pass'])
+        || isset($urlParts['query'])
+        || isset($urlParts['fragment'])
+        || (isset($urlParts['path']) && $urlParts['path'] !== '')
+    ) {
+        error_log('Invalid OLLAMA_BASE_URL configuration.');
+        respond(500, ['error' => 'The local AI connection is not configured correctly.']);
+    }
+
+    $model = getenv('OLLAMA_MODEL') ?: 'qwen3.5:4b';
+    if (!preg_match('/\A[A-Za-z0-9._:-]{1,100}\z/', $model)) {
+        error_log('Invalid OLLAMA_MODEL configuration.');
+        respond(500, ['error' => 'The local AI model is not configured correctly.']);
+    }
+
+    $requestBody = json_encode([
+        'model' => $model,
+        'messages' => array_merge(
+            [[
+                'role' => 'system',
+                'content' => 'You are a friendly, encouraging wellbeing assistant. Keep answers concise, practical, and supportive. Focus on simple questions and positive feedback. Do not diagnose conditions or recommend treatment. For medical symptoms or urgent concerns, advise the user to contact a qualified healthcare professional. Do not claim to know the user’s health data unless they provide it in this conversation.'
+            ]],
+            $messages
+        ),
+        'stream' => false,
+        'think' => false,
+        'options' => [
+            'temperature' => 0.6,
+            'num_predict' => 256,
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+    set_time_limit(125);
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => "Content-Type: application/json\r\nAccept: application/json\r\n",
+            'content' => $requestBody,
+            'timeout' => 120,
+            'ignore_errors' => true,
+            'follow_location' => 0,
+            'max_redirects' => 0,
+        ],
+    ]);
+
+    error_clear_last();
+    $responseBody = @file_get_contents(rtrim($baseUrl, '/') . '/api/chat', false, $context);
+    if ($responseBody === false) {
+        $lastError = error_get_last();
+        error_log('Ollama connection failed: ' . ($lastError['message'] ?? 'No response.'));
+        respond(503, ['error' => 'Unable to reach local Ollama. Check that it is running and accessible.']);
+    }
+
+    $statusCode = 0;
+    foreach ($http_response_header ?? [] as $responseHeader) {
+        if (preg_match('/\AHTTP\/\S+\s+(\d{3})\b/', $responseHeader, $matches) === 1) {
+            $statusCode = (int) $matches[1];
+        }
+    }
+    if ($statusCode < 200 || $statusCode >= 300) {
+        error_log('Ollama returned HTTP ' . $statusCode . '.');
+        respond(502, ['error' => 'Ollama could not generate a reply. Check that the configured model is available.']);
+    }
+
+    try {
+        $responseData = json_decode($responseBody, true, 512, JSON_THROW_ON_ERROR);
+    } catch (JsonException $exception) {
+        error_log('Ollama returned invalid JSON.');
+        respond(502, ['error' => 'Ollama returned an invalid response. Please try again.']);
+    }
+
+    $messageData = is_array($responseData) ? ($responseData['message'] ?? null) : null;
+    $reply = is_array($messageData) ? ($messageData['content'] ?? null) : null;
+    if (!is_string($reply) || trim($reply) === '') {
+        error_log('Ollama response did not contain a message.');
+        respond(502, ['error' => 'Ollama returned an empty reply. Please try again.']);
+    }
+
+    return trim($reply);
+}
+
 try {
     if ($method === 'GET') {
         if (!isset($_SESSION['user_id'])) {
@@ -125,7 +215,7 @@ try {
 
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
     if (stripos($contentType, 'application/json') !== 0) {
-        respond(415, ['error' => 'Send login details as JSON.']);
+        respond(415, ['error' => 'Send the request as JSON.']);
     }
 
     try {
@@ -142,7 +232,7 @@ try {
     $username = $credentials['username'] ?? null;
     $password = $credentials['password'] ?? null;
 
-    if (!is_string($action) || !in_array($action, ['login', 'register', 'logout', 'create_goal', 'update_goal', 'delete_goal', 'mark_goal_done', 'mark_goal_not_done', 'create_entry', 'update_entry', 'delete_entry'], true)) {
+    if (!is_string($action) || !in_array($action, ['login', 'register', 'logout', 'chat', 'create_goal', 'update_goal', 'delete_goal', 'mark_goal_done', 'mark_goal_not_done', 'create_entry', 'update_entry', 'delete_entry'], true)) {
         respond(400, ['error' => 'Invalid account action.']);
     }
 
@@ -161,6 +251,42 @@ try {
         }
         session_destroy();
         respond(200, ['logged_out' => true]);
+    }
+
+    if ($action === 'chat') {
+        if (!isset($_SESSION['user_id'])) {
+            respond(401, ['error' => 'Please sign in to use the chat.']);
+        }
+
+        $messages = $credentials['messages'] ?? null;
+        if (!is_array($messages) || !array_is_list($messages) || count($messages) < 1 || count($messages) > 12) {
+            respond(400, ['error' => 'Send between 1 and 12 chat messages.']);
+        }
+
+        $validatedMessages = [];
+        $previousRole = null;
+        foreach ($messages as $message) {
+            $role = is_array($message) ? ($message['role'] ?? null) : null;
+            $content = is_array($message) ? ($message['content'] ?? null) : null;
+            if (
+                !is_string($role)
+                || !in_array($role, ['user', 'assistant'], true)
+                || !is_string($content)
+                || trim($content) === ''
+                || characterLength(trim($content)) > 1000
+                || $previousRole === $role
+            ) {
+                respond(400, ['error' => 'The chat history contains an invalid message.']);
+            }
+
+            $validatedMessages[] = ['role' => $role, 'content' => trim($content)];
+            $previousRole = $role;
+        }
+        if ($previousRole !== 'user') {
+            respond(400, ['error' => 'The latest chat message must be from you.']);
+        }
+
+        respond(200, ['reply' => getOllamaReply($validatedMessages)]);
     }
 
     if ($action === 'delete_entry') {

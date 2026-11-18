@@ -41,7 +41,7 @@ include __DIR__ . '/includes/navigation.php';
             </div>
             <div class="mb-[18px]">
                 <label class="mb-[7px] block text-[13px] font-semibold text-[#26372d]" for="birthday">Birthday</label>
-                <input id="birthday" name="birthday" type="date" autocomplete="bday"
+                <input id="birthday" name="birthday" type="date" lang="en" autocomplete="bday"
                        required disabled class="min-h-[47px] w-full rounded-[9px] border border-[#dce2da] bg-white px-[13px] py-[11px] text-sm text-[#17251e] outline-none focus:border-[#3a7752] focus:ring-[3px] focus:ring-[#3a77521c]">
             </div>
             <div class="mb-[18px]">

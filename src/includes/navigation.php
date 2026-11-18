@@ -7,9 +7,9 @@
         <span id="site-navigation-user" class="ml-[44px] mt-1 text-[12px] font-medium text-[#68756c]" aria-live="polite" style="display: none"></span>
     </div>
     <nav id="site-navigation-links" class="flex flex-wrap gap-x-6 gap-y-3 text-[13px] font-bold text-[#28603e]" aria-label="Main navigation" style="display: none">
-        <a class="no-underline hover:underline" href="index.php">Account</a>
-        <a class="no-underline hover:underline" href="dashboard.php">Dashboard</a>
+        <a class="no-underline hover:underline" href="dashboard.php">Dashboard</a>    
         <a class="no-underline hover:underline" href="goals.php">Goals</a>
         <a class="no-underline hover:underline" href="entries.php">Health entries</a>
+        <a class="no-underline hover:underline" href="index.php">Account</a>
     </nav>
 </header>

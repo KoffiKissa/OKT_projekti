@@ -1548,7 +1548,9 @@
                 readResponse(entryResponse),
                 readResponse(bmiResponse)
             ]);
-            const goals = goalData.goals;
+            const goals = [...goalData.goals].sort(
+                (first, second) => Number(first.goal_done) - Number(second.goal_done)
+            );
             const entries = entryData.entries;
             document.getElementById('current-bmi').textContent = bmiData.bmi === null
                 ? 'Not available'

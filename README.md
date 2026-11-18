@@ -78,3 +78,18 @@ If the existing column allows `NULL`, normalize its values and default:
 UPDATE goals SET goal_done = 0 WHERE goal_done IS NULL;
 ALTER TABLE goals MODIFY COLUMN goal_done TINYINT(1) NOT NULL DEFAULT 0;
 ```
+
+## Local AI chat
+
+The dashboard chat sends signed-in users' messages to the local Ollama service
+through the PHP API; the browser does not connect to Ollama directly. Docker
+Compose defaults to `http://host.docker.internal:11434` and the
+`qwen3.5:4b` model. Set `OLLAMA_BASE_URL` or `OLLAMA_MODEL` in your local
+`.env` file to override these values.
+
+Ollama must be running on the same host as Docker and reachable from the PHP
+container. On Windows, Ollama may need to listen on an interface accessible to
+Docker rather than only `127.0.0.1`; if changing its bind address, restrict
+access with Windows Firewall and do not expose the Ollama port to public
+networks. Chat history stays in the browser session and is not saved to the
+application database.
